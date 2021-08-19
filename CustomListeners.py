@@ -1,0 +1,4 @@
+from DecafListener import DecafListener
+class CustomListener(DecafListener):
+    def __init__(self) -> None:
+        super().__init__()

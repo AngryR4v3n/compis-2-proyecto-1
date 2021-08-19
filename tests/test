@@ -1,0 +1,10 @@
+class Program {
+    void main(){    
+        int numA;
+        int numB;
+
+        int res;
+        res = numA * numB;
+        return res;
+    }
+}
