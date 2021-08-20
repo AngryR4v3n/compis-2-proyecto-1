@@ -16,6 +16,7 @@ int factorial(int n)
 void main(void)
 {
 	int y[10];
+	int x;
 	y[2] = 2;
 	y[3] = 3;
 	y[1]= y[2]+y[3];
