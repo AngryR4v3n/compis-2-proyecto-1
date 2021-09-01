@@ -14,8 +14,9 @@ void main(void)
 	p = x+y;	
 	hola = true;
 	adios = false;
-	x == y;
+	x > y;
 	hola && adios;
+
 }
 
 }

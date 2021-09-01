@@ -7,8 +7,6 @@ from antlr4 import TerminalNode
 Symbol Table:
 {Entry.name: {...} }
 """
-
-
 class SymbolTable():
     def __init__(self):
         self.scopes = ["global"]
@@ -105,8 +103,6 @@ class SymbolTable():
 Forma de una entrada en un symbol table
 {uid: 13414141, varType: "int", name: "num", value: "1" scope: "global"}
 """
-
-
 class SymbolTableEntry():
     def __init__(self, varType, name, value, symbolType, parentScope, arrIndex=None, scope="global"):
         self.id = hash(name+str(arrIndex)) if arrIndex else hash(name)
@@ -185,8 +181,75 @@ class CustomListener(DecafListener):
         if not updated:
             self.add_errors("Type error", "check type declaration and assignment", ctx.start.line)
 
+    def exitReturnSt(self, ctx: DecafParser.ReturnStContext):
+        varToReturn = ctx.getChild(1).getChild(0)
+        self.nodeTypes[ctx] = self.nodeTypes[varToReturn]
     
-       
+    def exitParamMethod(self, ctx: DecafParser.EmptyMethodContext):
+        block = ctx.getChild(ctx.getChildCount()-1)
+        lastSt = block.getChild(block.getChildCount()-2)
+        exprRet = lastSt.getChild(1).getChild(0)
+        retTxt = lastSt.getChild(0).getText()
+        methodtype = ctx.getChild(0)
+        methodtype = self.nodeTypes[methodtype]
+        if retTxt == 'return' and methodtype != 'void':
+            typeRet = self.nodeTypes[exprRet]
+            typeRet = self.nodeTypes[exprRet]
+            
+            if methodtype != typeRet:
+                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
+
+        elif retTxt != 'return' and methodtype != 'void':
+            self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
+        
+        elif retTxt == 'return' and methodtype == 'void':
+            self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
+
+    
+    def exitParamsMethod(self, ctx: DecafParser.EmptyMethodContext):
+        block = ctx.getChild(ctx.getChildCount()-1)
+        lastSt = block.getChild(block.getChildCount()-2)
+        exprRet = lastSt.getChild(1).getChild(0)
+        retTxt = lastSt.getChild(0).getText()        
+        methodtype = ctx.getChild(0)
+        methodtype = self.nodeTypes[methodtype]
+        if retTxt == 'return' and methodtype != 'void':
+            typeRet = self.nodeTypes[exprRet]
+            typeRet = self.nodeTypes[exprRet]
+            
+            if methodtype != typeRet:
+                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
+
+        elif retTxt != 'return' and methodtype != 'void':
+            self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
+        
+        elif retTxt == 'return' and methodtype == 'void':
+            self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
+
+
+    def exitEmptyMethod(self, ctx: DecafParser.EmptyMethodContext):
+        block = ctx.getChild(ctx.getChildCount()-1)
+        lastSt = block.getChild(block.getChildCount()-2)
+        exprRet = lastSt.getChild(1).getChild(0)
+        retTxt = lastSt.getChild(0).getText()
+        methodtype = ctx.getChild(0)
+        methodtype = self.nodeTypes[methodtype]
+        if retTxt == 'return' and methodtype != 'void':
+            typeRet = self.nodeTypes[exprRet]
+            typeRet = self.nodeTypes[exprRet]
+            
+            if methodtype != typeRet:
+                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
+
+        elif retTxt != 'return' and methodtype != 'void':
+            self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
+        
+        elif retTxt == 'return' and methodtype == 'void':
+            self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
+            
+    def exitMethodType(self, ctx: DecafParser.MethodTypeContext):
+        child = ctx.getChild(0).getText()
+        self.nodeTypes[ctx] = child
     def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
         self.nodeTypes[ctx] = 'int'
 

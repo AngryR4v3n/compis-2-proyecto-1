@@ -2,7 +2,7 @@ class Program
 { 
 
 
-void main(void)
+int main(void)
 {
 	boolean hola;
 	boolean adios;
@@ -16,6 +16,8 @@ void main(void)
 	adios = false;
 	x > y;
 	hola && adios;
+	return x;
+
 }
 
 }
