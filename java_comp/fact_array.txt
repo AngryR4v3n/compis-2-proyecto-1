@@ -1,0 +1,21 @@
+class Program
+{ 
+
+
+void main(void)
+{
+	boolean hola;
+	boolean adios;
+	int x;
+	int y;
+	int p;
+	x = 4;
+	y = 5;
+	p = x+y;	
+	hola = true;
+	adios = false;
+
+	hola && adios;
+}
+
+}
