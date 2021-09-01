@@ -1,8 +1,12 @@
 class Program
 { 
 
-
-int main(void)
+int suma(int a, int b){
+	int sum;
+	sum = a + b;
+	return sum;
+}
+void main(void)
 {
 	boolean hola;
 	boolean adios;
@@ -14,9 +18,7 @@ int main(void)
 	p = x+y;	
 	hola = true;
 	adios = false;
-	x > y;
-	hola && adios;
-	return x;
+	p = suma(3,4);
 
 }
 
