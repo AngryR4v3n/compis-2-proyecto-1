@@ -269,18 +269,6 @@ public interface DecafListener extends ParseTreeListener {
 	 */
 	void exitBlockSt(DecafParser.BlockStContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code expSt}
-	 * labeled alternative in {@link DecafParser#statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterExpSt(DecafParser.ExpStContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code expSt}
-	 * labeled alternative in {@link DecafParser#statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitExpSt(DecafParser.ExpStContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code assignSt}
 	 * labeled alternative in {@link DecafParser#statement}.
 	 * @param ctx the parse tree
@@ -292,6 +280,18 @@ public interface DecafListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAssignSt(DecafParser.AssignStContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code expSt}
+	 * labeled alternative in {@link DecafParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpSt(DecafParser.ExpStContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code expSt}
+	 * labeled alternative in {@link DecafParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpSt(DecafParser.ExpStContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DecafParser#literal}.
 	 * @param ctx the parse tree

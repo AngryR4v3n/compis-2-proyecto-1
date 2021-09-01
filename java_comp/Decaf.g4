@@ -19,8 +19,6 @@ APOSTROPHE: '\'';
 
 CHAR_LITERAL: APOSTROPHE (LETTER | [\\\t\n]) APOSTROPHE;
 
-TRUE: 'true';
-FALSE: 'false';
 
 /*
  * Parser Rules
@@ -65,8 +63,21 @@ statement:
 	| 'return' expression? ';' #returnSt
 	| methodCall ';' #methodSt
 	| block #blockSt
-	| location '=' expression #assignSt
-	| expression? ';' #expSt;
+	| expression? ';' #expSt
+	| location '=' expression #assignSt;
+	
+
+
+literal: 
+	int_literal
+	| char_literal
+	| bool_literal;
+
+int_literal: NUM;
+
+char_literal: CHAR_LITERAL;
+
+bool_literal: 'true' | 'false';
 
 location: (ID | ID '[' expression ']') ('.' location)?;
 
@@ -95,16 +106,5 @@ rel_op: '<' | '>' | '<=' | '>=';
 eq_op: '==' | '!=';
 
 cond_op: '&&' | '||';
-
-literal: 
-	int_literal #int_lit
-	| char_literal #char_lit
-	| bool_literal #bool_lit;
-
-int_literal: NUM;
-
-char_literal: CHAR_LITERAL;
-
-bool_literal: TRUE | FALSE;
 
 WHITESPACE: [\t\r\n ] -> skip;

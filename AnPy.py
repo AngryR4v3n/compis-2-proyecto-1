@@ -16,6 +16,9 @@ def main(argv):
     Customlisteners = CustomListener()
     walker.walk(Customlisteners, tree)
 
+    for elem in Customlisteners.errors:
+        print(elem)
+
 
 def traverse(tree):
     if tree.getText() == "<EOF>":
