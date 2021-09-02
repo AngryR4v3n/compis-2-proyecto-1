@@ -13,12 +13,13 @@ void main(void)
 	int x;
 	int y;
 	int p;
+	boolean z;
 	x = 4;
 	y = 5;
 	p = x+y;	
 	hola = true;
 	adios = false;
-	p = suma(3,4);
+	suma();
 
 }
 
