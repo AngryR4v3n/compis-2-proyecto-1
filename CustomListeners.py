@@ -13,10 +13,7 @@ class SymbolTable():
         self.currentScope = self.scopes[0]
         self.parentScope = ""
         self.table = {self.currentScope: {"parentScope": ""}}
-        self.types = {"int": [38], "char": [40, 37], "boolean": [41, 42]}
-        self.inverseTypes = {38: "int", 40: "char",
-                             37: "char", 41: "boolean", 42: "boolean"}
-
+        
     def add_entry(self, entry) -> None:
         #self.isCorrect(entry)
         obj = {
@@ -133,6 +130,9 @@ class CustomListener(DecafListener):
         self.table = SymbolTable()
         self.nodeTypes = {}
         self.errors = []
+        #method_obj: {true/false}
+        self.nonVoid = {}
+
         super().__init__()
 
     def add_errors(self, errorTitle,entry, line):
@@ -167,6 +167,8 @@ class CustomListener(DecafListener):
         self.table.nest_scope(methodName)
         entry = SymbolTableEntry(methodReturnType, methodName, None,
                                  "function", self.table.parentScope, scope=self.table.currentScope)
+        if methodReturnType != "void":
+            self.nonVoid[ctx] = {"isOk":False, "obj": ctx}
         self.table.add_entry(entry)
 
     def enterParamMethod(self, ctx: DecafParser.ParamMethodContext):
@@ -175,6 +177,8 @@ class CustomListener(DecafListener):
         self.table.nest_scope(methodName)
         entry = SymbolTableEntry(methodReturnType, methodName, None,
                                  "function", self.table.parentScope, scope=self.table.currentScope)
+        if methodReturnType != "void":
+            self.nonVoid[ctx] = {"isOk":False, "obj": ctx}
         self.table.add_entry(entry)
 
     def enterParamsMethod(self, ctx: DecafParser.ParamsMethodContext):
@@ -183,6 +187,8 @@ class CustomListener(DecafListener):
         self.table.nest_scope(methodName)
         entry = SymbolTableEntry(methodReturnType, methodName, None,
                                  "function", self.table.parentScope, scope=self.table.currentScope)
+        if methodReturnType != "void":
+            self.nonVoid[ctx] = {"isOk":False, "obj": ctx}
         self.table.add_entry(entry)
 
         
@@ -207,65 +213,72 @@ class CustomListener(DecafListener):
     def exitReturnSt(self, ctx: DecafParser.ReturnStContext):
         varToReturn = ctx.getChild(1).getChild(0)
         self.nodeTypes[ctx] = self.nodeTypes[varToReturn]
+        functParent = self.getAncestor(ctx)
+        if not (isinstance(functParent, (DecafParser.ParamMethodContext, DecafParser.ParamsMethodContext, DecafParser.EmptyMethodContext))):
+            self.add_errors("Unexpected return", "return outside function", ctx.start.line)
+        else:
+            typeFunct = functParent.getChild(0).getChild(0).getText()
+
+            if typeFunct == "void":
+                self.add_errors("Unexpected return", "return in void function", ctx.start.line)
+            elif self.nodeTypes[varToReturn] != typeFunct:
+                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
+        self.nonVoid[functParent]["isOk"] = True
+
+
+    def getAncestor(self, ctx, ancestorType="func"):
+        parent=ctx.parentCtx
+        if ancestorType == "func":
+            if(isinstance(parent, (DecafParser.ParamMethodContext, DecafParser.ParamsMethodContext, DecafParser.EmptyMethodContext))):
+                return parent
+            else:
+                parent = self.getAncestor(parent)
+        else:
+            if(isinstance(parent, ancestorType)):
+                return parent
+            else:
+                parent = self.getAncestor(parent, ancestorType)
+        
+        return parent
+
+                
     
     def exitMethodCallExp(self, ctx: DecafParser.MethodCallExpContext):
         child = ctx.getChild(0)
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
 
     def exitParamMethod(self, ctx: DecafParser.ParamMethodContext):
-        block = ctx.getChild(ctx.getChildCount()-1)
-        lastSt = block.getChild(block.getChildCount()-2)
-        exprRet = lastSt.getChild(1).getChild(0)
-        retTxt = lastSt.getChild(0).getText()
         methodtype = ctx.getChild(0)
         methodtype = self.nodeTypes[methodtype]
-        if retTxt == 'return' and methodtype != 'void':
-            typeRet = self.nodeTypes[exprRet]
-            typeRet = self.nodeTypes[exprRet]
-            
-            if methodtype != typeRet:
-                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
-
-        elif retTxt != 'return' and methodtype != 'void':
-            self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
-        
-        elif retTxt == 'return' and methodtype == 'void':
-            self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
         self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
 
-        
 
     def exitParamsMethod(self, ctx: DecafParser.ParamsMethodContext):
-        block = ctx.getChild(ctx.getChildCount()-1)
-        lastSt = block.getChild(block.getChildCount()-2)
-        exprRet = lastSt.getChild(1).getChild(0)
-        retTxt = lastSt.getChild(0).getText() 
+        methodtype = ctx.getChild(0)
         params = ctx.parameter()
-        
-        #asignamos en for loop que indice es ese metodo para identificar facilmente.
+            #asignamos en for loop que indice es ese metodo para identificar facilmente.
         for index, elem in enumerate(params):
             varName = elem.getChild(1).getText()
             target = self.table.get_entry({"scope":self.table.currentScope, "name": varName})
             target.arrIndex = index
-            print("")
 
-        methodtype = ctx.getChild(0)
-        methodtype = self.nodeTypes[methodtype]
-        if retTxt == 'return' and methodtype != 'void':
-            typeRet = self.nodeTypes[exprRet]
-            typeRet = self.nodeTypes[exprRet]
-            
-            if methodtype != typeRet:
-                self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
-
-        elif retTxt != 'return' and methodtype != 'void':
-            self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
         
-        elif retTxt == 'return' and methodtype == 'void':
-            self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
+        methodtype = self.nodeTypes[methodtype]
+        
         self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
+
+
+    def exitEmptyMethod(self, ctx: DecafParser.EmptyMethodContext):
+        methodName = ctx.getChild(1).getText()
+        methodtype = ctx.getChild(0)
+
+        if methodName != "main":
+            methodtype = self.nodeTypes[methodtype]
+            self.nodeTypes[ctx] = methodtype
+        self.table.exit_scope()
+
 
     
     def exitParameter(self, ctx: DecafParser.ParameterContext):
@@ -273,33 +286,8 @@ class CustomListener(DecafListener):
         paramName = ctx.getChild(1).getText()
         entry = SymbolTableEntry(paramType, paramName, "", 'param', self.table.parentScope, scope=self.table.currentScope)
         self.table.add_entry(entry)
-        print("")
     
-    def exitEmptyMethod(self, ctx: DecafParser.EmptyMethodContext):
-        block = ctx.getChild(ctx.getChildCount()-1)
-        lastSt = block.getChild(block.getChildCount()-2)
-        methodName = ctx.getChild(1).getText()
-        if methodName != "main":
-            exprRet = lastSt.getChild(1).getChild(0)
-            retTxt = lastSt.getChild(0).getText()
-            methodtype = ctx.getChild(0)
-            methodtype = self.nodeTypes[methodtype]
-            if retTxt == 'return' and methodtype != 'void':
-                typeRet = self.nodeTypes[exprRet]
-                typeRet = self.nodeTypes[exprRet]
-                
-                if methodtype != typeRet:
-                    self.add_errors("Type error", "return type and method type must be the same", ctx.start.line)
-
-            elif retTxt != 'return' and methodtype != 'void':
-                self.add_errors("Type error", "non void methods must have a return statement", ctx.start.line)
-            
-            elif retTxt == 'return' and methodtype == 'void':
-                self.add_errors("Type error", "unexpected return in void method", ctx.start.line)
-            self.nodeTypes[ctx] = methodtype
-        self.table.exit_scope()
-
-    #TODO: REPLICAR ESTO PARA EL RESTO DE FUNCIONES :)
+    
     def exitMethodCallParams(self, ctx: DecafParser.MethodCallParamsContext):
         methodName = ctx.getChild(0).getText()
         exps = ctx.expression()
@@ -324,7 +312,6 @@ class CustomListener(DecafListener):
         for elem in scope.keys():
             if scope[elem].symbolType == "param":
                self.add_errors("Method call error", f"Invalid method call, missing param {scope[elem].name}", ctx.start.line) 
-        print("")
         self.nodeTypes[ctx] = method.varType
 
         
@@ -425,5 +412,10 @@ class CustomListener(DecafListener):
         scopes = self.table.table.keys()
         if "main" not in scopes:
             self.add_errors("Missing method", "missing main() method", ctx.start.line)
+        for key in self.nonVoid.keys():
+            if not self.nonVoid[key]["isOk"]:
+                self.add_errors("Missing return", "Non void method is missing a return statement", self.nonVoid[key]["obj"].start.line)
+
+        
 
 

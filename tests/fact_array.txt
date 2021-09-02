@@ -4,7 +4,10 @@ class Program
 int suma(int a, int b){
 	int sum;
 	sum = a + b;
-	return sum;
+	if(a>b){
+		sum;
+	}
+	
 }
 void main(void)
 {
@@ -19,7 +22,7 @@ void main(void)
 	p = x+y;	
 	hola = true;
 	adios = false;
-	suma();
+	suma(4, 5);
 
 }
 
