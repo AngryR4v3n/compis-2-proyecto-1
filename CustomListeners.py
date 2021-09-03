@@ -12,7 +12,6 @@ class CustomListener(DecafListener):
         self.errors = []
         #method_obj: {true/false}
         self.nonVoid = {}
-
         super().__init__()
 
     def add_errors(self, errorTitle, entry, line):
@@ -20,10 +19,20 @@ class CustomListener(DecafListener):
 
     def enterNormalVar(self, ctx: DecafParser.NormalVarContext):
         varType = ctx.getChild(0).getText()
+
+        if varType.find("struct") != -1:
+            varType = ctx.getChild(0).getChild(1).getText()
+            definition = self.table.get_entry({"name": varType, "scope": varType})
+            if not definition:
+                
+                self.add_errors("Struct declaration error",
+                                    "Struct type does not exist", ctx.start.line)
+
         id = ctx.getChild(1).getText()
         entry = SymbolTableEntry(
             varType, id, "", "var", self.table.parentScope, scope=self.table.currentScope)
 
+        self.nodeTypes[ctx] = varType
         self.table.add_entry(entry)
         return super().enterNormalVar(ctx)
 
@@ -80,7 +89,7 @@ class CustomListener(DecafListener):
             varName = elem.getChild(1).getText()
             paramType = elem.getChild(0).getText()
             param = SymbolTableEntry(paramType, varName, "", 'param',
-                                 self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
+                                     self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
             self.table.add_entry(param)
         if methodReturnType != "void":
             self.nonVoid[ctx] = {"isOk": False, "obj": ctx}
@@ -149,7 +158,6 @@ class CustomListener(DecafListener):
         self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
 
-
     def exitParamsMethod(self, ctx: DecafParser.ParamsMethodContext):
         methodtype = ctx.getChild(0)
         methodtype = self.nodeTypes[methodtype]
@@ -166,16 +174,17 @@ class CustomListener(DecafListener):
             self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
 
-
     def exitMethodCallParams(self, ctx: DecafParser.MethodCallParamsContext):
         methodName = ctx.getChild(0).getText()
 
-        methodObj = self.table.get_entry({"name": methodName, "scope": methodName})
+        methodObj = self.table.get_entry(
+            {"name": methodName, "scope": methodName})
         if methodObj:
             typeVar = methodObj.varType
             self.nodeTypes[ctx] = typeVar
         else:
-            self.add_errors("Unexisting method call", "Non defined method call", ctx.start.line)
+            self.add_errors("Unexisting method call",
+                            "Non defined method call", ctx.start.line)
             return
         exps = ctx.expression()
         for index, elem in enumerate(exps):
@@ -194,15 +203,16 @@ class CustomListener(DecafListener):
                 self.add_errors("Method call error",
                                 "Invalid method call", ctx.start.line)
 
-        
     def exitMethodCallNoParam(self, ctx: DecafParser.MethodCallNoParamContext):
         methodName = ctx.getChild(0).getText()
-        methodObj = self.table.get_entry({"name": methodName, "scope": methodName})
+        methodObj = self.table.get_entry(
+            {"name": methodName, "scope": methodName})
         if methodObj:
             typeVar = methodObj.varType
             self.nodeTypes[ctx] = typeVar
         else:
-            self.add_errors("Unexisting method call", "Non defined method call", ctx.start.line)
+            self.add_errors("Unexisting method call",
+                            "Non defined method call", ctx.start.line)
             return
 
         scope = self.table.get_scope({"scope": methodName})
@@ -210,16 +220,17 @@ class CustomListener(DecafListener):
             if scope[elem].symbolType == "param":
                 self.add_errors(
                     "Method call error", f"Invalid method call, missing param {scope[elem].name}", ctx.start.line)
-        
-        
+
     def exitMethodCallParam(self, ctx: DecafParser.MethodCallParamContext):
         methodName = ctx.getChild(0).getText()
-        methodObj = self.table.get_entry({"name": methodName, "scope": methodName})
+        methodObj = self.table.get_entry(
+            {"name": methodName, "scope": methodName})
         if methodObj:
             typeVar = methodObj.varType
             self.nodeTypes[ctx] = typeVar
         else:
-            self.add_errors("Unexisting method call", "Non defined method call", ctx.start.line)
+            self.add_errors("Unexisting method call",
+                            "Non defined method call", ctx.start.line)
             return
         exps = ctx.expression()
         val = exps.getChild(0)
@@ -235,8 +246,6 @@ class CustomListener(DecafListener):
         except AttributeError:
             self.add_errors("Method call error",
                             "Invalid method call", ctx.start.line)
-        
-
 
     def exitMethod(self, ctx: DecafParser.MethodCallParamContext):
         methodName = ctx.getChild(0).getText()
@@ -337,22 +346,27 @@ class CustomListener(DecafListener):
 
     def exitLocation(self, ctx: DecafParser.LocationContext):
         child = ctx.getChild(0).getText()
-        
+
+        #encuentra la variable a la cual se refiere, en el current scope
         val = self.table.get_entry(
             {"name": child, "scope": self.table.currentScope})
 
-        #si no esta en el actual, buscamos en globales
+        # si no esta en el actual, buscamos en globales
         if not val:
-            val = self.table.get_entry({"name": child, "scope":child})
+            val = self.table.get_entry({"name": child, "scope": child})
+        
+        #si viene de una expresion la evaluamos
         expr = ctx.expression()
 
         if expr:
             typeExpr = self.nodeTypes[expr]
             if typeExpr != "int":
                 self.add_errors(
-                "Index error", "expression must return int type", ctx.start.line)
+                    "Index error", "expression must return int type", ctx.start.line)
 
-        
+        #si viene location?
+        loc = ctx.location()
+
         self.nodeTypes[ctx] = val.varType
 
     def exitLocationExp(self, ctx: DecafParser.LocationExpContext):
@@ -372,6 +386,37 @@ class CustomListener(DecafListener):
             self.add_errors(
                 "Type error", "expression must return bool type", ctx.start.line)
 
+    def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
+        name = ctx.getChild(1).getText()
+        self.table.nest_scope(name)
+        entry = SymbolTableEntry("struct", name, "", "struct",
+                                 self.table.parentScope, scope=self.table.currentScope)
+        self.table.add_entry(entry)
+        declarations = ctx.varDeclaration()
+        for index, elem in enumerate(declarations):
+            typeDec = elem.getChild(0).getChild(0).getText()
+
+            if typeDec == "struct":
+                typeVar = elem.getChild(0).getChild(1).getText()
+                # check if exists
+                exists = self.table.get_entry(
+                    {"name": typeVar, "scope": typeVar})
+                if not exists:
+                    self.add_errors("Struct declaration error",
+                                    "Struct type does not exist", elem.start.line)
+            else:
+                typeVar = elem.getChild(0).getChild(0).getText()
+
+            name = elem.getChild(1).getText()
+
+            entry = SymbolTableEntry(typeVar, name, "", "structParam",
+                                     self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
+            self.table.add_entry(entry)
+
+
+    def exitStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
+        self.table.exit_scope()
+    
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         scopes = self.table.table.keys()
         if "main" not in scopes:

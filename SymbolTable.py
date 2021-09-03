@@ -7,7 +7,7 @@ class SymbolTable():
         self.scopes = ["global"]
         self.currentScope = self.scopes[0]
         self.parentScope = ""
-        self.table = {self.currentScope: {"parentScope": ""}}
+        self.table = {self.currentScope: {}}
 
     def add_entry(self, entry) -> None:
         # self.isCorrect(entry)

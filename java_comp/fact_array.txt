@@ -13,15 +13,27 @@ void OutputInt(int n)
 {
 }
 
+struct B
+{
+	int s;
+};
+struct A
+{
+	int a;
+	struct B c;
+};
+
 int InputInt(void)
 {return 0;}
 
 void main(void)
 {
 	int a;
+	int x;
+	struct x ad;
+
 	a = factorial(1);
-	OutputInt(a);
-	InputInt();
+	a = factorial(InputInt());
 	
 	
 }
