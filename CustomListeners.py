@@ -1,130 +1,8 @@
 from antlr4.tree.Tree import TerminalNodeImpl
 from DecafListener import DecafListener
 from DecafParser import DecafParser
-from antlr4 import TerminalNode
-
-
-"""
-Symbol Table:
-{Entry.name: {...} }
-"""
-
-
-class SymbolTable():
-    def __init__(self):
-        self.scopes = ["global"]
-        self.currentScope = self.scopes[0]
-        self.parentScope = ""
-        self.table = {self.currentScope: {"parentScope": ""}}
-
-    def add_entry(self, entry) -> None:
-        # self.isCorrect(entry)
-        obj = {
-            entry.id: entry
-        }
-
-        try:
-            prevValues = {**self.table[self.currentScope]}
-            self.table[self.currentScope] = prevValues | obj
-
-        except KeyError:
-            self.table[self.currentScope] = {
-                entry.id: entry
-            }
-
-    def get_entry(self, entryQuery):
-        try:
-            return self.table[entryQuery["scope"]][hash(entryQuery["name"])]
-        except KeyError:
-            pass
-
-    def get_scope(self, entryQuery):
-        try:
-            return self.table[entryQuery["scope"]]
-        except KeyError:
-            pass
-
-    """
-    entryQuery: {"scope": foo, "index": 1}
-    """
-
-    def get_entry_by_idx(self, entryQuery):
-        try:
-            variables = self.table[entryQuery["scope"]]
-            keys = variables.keys()
-            for elem in keys:
-                if self.table[entryQuery["scope"]][elem].arrIndex == entryQuery["index"]:
-                    return self.table[entryQuery["scope"]][elem]
-        except KeyError:
-            pass
-
-    def update_entry(self, entry, typeNode) -> bool:
-        if not self.checkTypeError(entry, typeNode):
-            self.table[self.currentScope][entry.id] = entry
-            return True
-        else:
-            return False
-
-    def checkTypeError(self, entry, varType) -> bool:
-        if entry.varType == varType:
-            return False
-        else:
-            return True
-
-    """
-    Metodo utilizado para entrar a un nuevo ambito.
-    """
-
-    def nest_scope(self, newScope) -> None:
-        self.scopes.append(newScope)
-        self.parentScope = self.currentScope
-        self.currentScope = newScope
-
-    """
-    Metodo utilizado para salir del ambito.
-    """
-
-    def exit_scope(self) -> None:
-        self.scopes.pop()
-
-        self.scope = self.scopes[len(self.scopes)-1]
-
-        if len(self.scopes) >= 2:
-            self.parentScope = self.scopes[len(self.scopes)-2]
-        else:
-            self.parentScope = "global"
-
-    """
-    Checks if the variable that is being added exists in a the same scope
-    """
-
-    def check_existing_same_scope(self, entry) -> bool:
-        try:
-            existingDictionary = self.table[entry.scope]
-            existingDictionary[entry.id]
-            return True
-
-        except KeyError:
-
-            return False
-
-
-"""
-Forma de una entrada en un symbol table
-{uid: 13414141, varType: "int", name: "num", value: "1" scope: "global"}
-"""
-
-
-class SymbolTableEntry():
-    def __init__(self, varType, name, value, symbolType, parentScope, arrIndex=None, scope="global"):
-        self.id = hash(name+str(arrIndex)) if arrIndex else hash(name)
-        self.varType = varType
-        self.name = name
-        self.value = value
-        self.symbolType = symbolType
-        self.parentScope = parentScope
-        self.scope = scope
-        self.arrIndex = arrIndex
+from SymbolTable import SymbolTable
+from SymbolTableEntry import SymbolTableEntry
 
 
 class CustomListener(DecafListener):
@@ -177,6 +55,14 @@ class CustomListener(DecafListener):
         self.table.nest_scope(methodName)
         entry = SymbolTableEntry(methodReturnType, methodName, None,
                                  "function", self.table.parentScope, scope=self.table.currentScope)
+
+        varName = ctx.parameter().getChild(1).getText()
+        varType = ctx.parameter().getChild(0).getText()
+        param = SymbolTableEntry(varType, varName, "", 'param',
+                                 self.table.parentScope, arrIndex=0, scope=self.table.currentScope)
+
+        self.table.add_entry(param)
+
         if methodReturnType != "void":
             self.nonVoid[ctx] = {"isOk": False, "obj": ctx}
         self.table.add_entry(entry)
@@ -187,6 +73,15 @@ class CustomListener(DecafListener):
         self.table.nest_scope(methodName)
         entry = SymbolTableEntry(methodReturnType, methodName, None,
                                  "function", self.table.parentScope, scope=self.table.currentScope)
+
+        params = ctx.parameter()
+        # asignamos en for loop que indice es ese metodo para identificar facilmente.
+        for index, elem in enumerate(params):
+            varName = elem.getChild(1).getText()
+            paramType = elem.getChild(0).getText()
+            param = SymbolTableEntry(paramType, varName, "", 'param',
+                                 self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
+            self.table.add_entry(param)
         if methodReturnType != "void":
             self.nonVoid[ctx] = {"isOk": False, "obj": ctx}
         self.table.add_entry(entry)
@@ -254,16 +149,9 @@ class CustomListener(DecafListener):
         self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
 
+
     def exitParamsMethod(self, ctx: DecafParser.ParamsMethodContext):
         methodtype = ctx.getChild(0)
-        params = ctx.parameter()
-        # asignamos en for loop que indice es ese metodo para identificar facilmente.
-        for index, elem in enumerate(params):
-            varName = elem.getChild(1).getText()
-            target = self.table.get_entry(
-                {"scope": self.table.currentScope, "name": varName})
-            target.arrIndex = index
-
         methodtype = self.nodeTypes[methodtype]
 
         self.nodeTypes[ctx] = methodtype
@@ -278,12 +166,6 @@ class CustomListener(DecafListener):
             self.nodeTypes[ctx] = methodtype
         self.table.exit_scope()
 
-    def exitParameter(self, ctx: DecafParser.ParameterContext):
-        paramType = ctx.getChild(0).getChild(0).getText()
-        paramName = ctx.getChild(1).getText()
-        entry = SymbolTableEntry(paramType, paramName, "", 'param',
-                                 self.table.parentScope, scope=self.table.currentScope)
-        self.table.add_entry(entry)
 
     def exitMethodCallParams(self, ctx: DecafParser.MethodCallParamsContext):
         methodName = ctx.getChild(0).getText()
@@ -340,7 +222,7 @@ class CustomListener(DecafListener):
             self.add_errors("Unexisting method call", "Non defined method call", ctx.start.line)
             return
         exps = ctx.expression()
-        val = exps.getChild(0).getChild(0)
+        val = exps.getChild(0)
         typeVar = self.nodeTypes[val]
         targetVar = self.table.get_entry_by_idx(
             {"scope": methodName, "index": 0})
@@ -448,16 +330,20 @@ class CustomListener(DecafListener):
 
     def exitParensOp(self, ctx: DecafParser.ParensOpContext):
         op1 = ctx.getChild(1).getChild(0)
-        if self.nodeTypes[op1] != "void":
+        if self.nodeTypes[op1] == "void":
             self.add_errors(
                 "Type error", "operand must not be void type", ctx.start.line)
         self.nodeTypes[ctx] = self.nodeTypes[op1]
 
     def exitLocation(self, ctx: DecafParser.LocationContext):
         child = ctx.getChild(0).getText()
+        
         val = self.table.get_entry(
             {"name": child, "scope": self.table.currentScope})
 
+        #si no esta en el actual, buscamos en globales
+        if not val:
+            val = self.table.get_entry({"name": child, "scope":child})
         expr = ctx.expression()
 
         if expr:
@@ -466,6 +352,7 @@ class CustomListener(DecafListener):
                 self.add_errors(
                 "Index error", "expression must return int type", ctx.start.line)
 
+        
         self.nodeTypes[ctx] = val.varType
 
     def exitLocationExp(self, ctx: DecafParser.LocationExpContext):

@@ -1,28 +1,28 @@
 class Program
 { 
 
-boolean suma(int a, int b){
-	int sum;
-	sum = a * b;
-	if(a>b){
-		return true;	
-	}
-	
+int factorial(int n)
+{
+	if (n==0)
+	{return 1;}
+	else
+	{return n*factorial(n-1);}
 }
+
+void OutputInt(int n)
+{
+}
+
+int InputInt(void)
+{return 0;}
+
 void main(void)
 {
-	boolean hola;
-	boolean adios;
+	int a;
 	int x;
-	int y;
-	int p;
-	boolean z;
-	int arr[3];
-	x = 4;
-	y = 5;
-	p = x*y;	
-	hola = true;
-	adios = false;
+	a = factorial(1);
+	x = OutputInt(a);
+	InputInt();
 	
 	
 }
