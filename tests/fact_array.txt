@@ -1,11 +1,11 @@
 class Program
 { 
 
-int suma(int a, int b){
+boolean suma(int a, int b){
 	int sum;
-	sum = a + b;
+	sum = a * b;
 	if(a>b){
-		sum;
+		return true;	
 	}
 	
 }
@@ -17,13 +17,14 @@ void main(void)
 	int y;
 	int p;
 	boolean z;
+	int arr[3];
 	x = 4;
 	y = 5;
-	p = x+y;	
+	p = x*y;	
 	hola = true;
 	adios = false;
-	suma(4, 5);
-
+	
+	
 }
 
 }
