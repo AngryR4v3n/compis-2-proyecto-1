@@ -4,7 +4,7 @@ Forma de una entrada en un symbol table
 """
 class SymbolTableEntry():
     def __init__(self, varType, name, value, symbolType, parentScope, arrIndex=None, scope="global"):
-        self.id = hash(name+str(arrIndex)) if arrIndex else hash(name)
+        self.id = name+str(arrIndex) if arrIndex else name
         self.varType = varType
         self.name = name
         self.value = value
@@ -12,3 +12,6 @@ class SymbolTableEntry():
         self.parentScope = parentScope
         self.scope = scope
         self.arrIndex = arrIndex
+
+    def __repr__(self) -> str:
+        return f"{self.varType} {self.name}"

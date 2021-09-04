@@ -26,7 +26,7 @@ class SymbolTable():
 
     def get_entry(self, entryQuery):
         try:
-            return self.table[entryQuery["scope"]][hash(entryQuery["name"])]
+            return self.table[entryQuery["scope"]][entryQuery["name"]]
         except KeyError:
             pass
 
@@ -68,7 +68,7 @@ class SymbolTable():
     """
 
     def nest_scope(self, newScope) -> None:
-        self.scopes.append(newScope)
+        self.scopes.insert(0,newScope)
         self.parentScope = self.currentScope
         self.currentScope = newScope
 
@@ -77,7 +77,7 @@ class SymbolTable():
     """
 
     def exit_scope(self) -> None:
-        self.scopes.pop()
+        self.scopes.pop(0)
 
         self.currentScope = self.scopes[len(self.scopes)-1]
 

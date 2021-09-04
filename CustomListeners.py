@@ -3,6 +3,7 @@ from DecafListener import DecafListener
 from DecafParser import DecafParser
 from SymbolTable import SymbolTable
 from SymbolTableEntry import SymbolTableEntry
+from random import randint
 
 
 class CustomListener(DecafListener):
@@ -12,6 +13,9 @@ class CustomListener(DecafListener):
         self.errors = []
         #method_obj: {true/false}
         self.nonVoid = {}
+        #name: {var: {EntryObj, EntryObj}}
+        self.structs = {}
+        self.structsStack = []
         super().__init__()
 
     def add_errors(self, errorTitle, entry, line):
@@ -19,22 +23,16 @@ class CustomListener(DecafListener):
 
     def enterNormalVar(self, ctx: DecafParser.NormalVarContext):
         varType = ctx.getChild(0).getText()
-
-        if varType.find("struct") != -1:
-            varType = ctx.getChild(0).getChild(1).getText()
-            definition = self.table.get_entry({"name": varType, "scope": varType})
-            if not definition:
-                
-                self.add_errors("Struct declaration error",
-                                    "Struct type does not exist", ctx.start.line)
-
         id = ctx.getChild(1).getText()
+        # STRUCT DE AQUI ES CUANDO NOS LLAMAN PARA DECLARAR UN STRUCT COMO VARIABLE
+        # struct A x;
+        
+        
         entry = SymbolTableEntry(
             varType, id, "", "var", self.table.parentScope, scope=self.table.currentScope)
 
         self.nodeTypes[ctx] = varType
         self.table.add_entry(entry)
-        return super().enterNormalVar(ctx)
 
     def enterArrVar(self, ctx: DecafParser.ArrVarContext):
         varType = ctx.getChild(0).getText()
@@ -96,10 +94,11 @@ class CustomListener(DecafListener):
         self.table.add_entry(entry)
 
     def exitAssignSt(self, ctx: DecafParser.AssignStContext):
+
         location = ctx.location().getText()
+
         expression = ctx.expression().getText()
         expr = ctx.expression()
-
         searchQuery = {"name": location, "scope": self.table.currentScope}
         registry = self.table.get_entry(searchQuery)
         updated = True
@@ -128,10 +127,11 @@ class CustomListener(DecafListener):
             if typeFunct == "void":
                 self.add_errors("Unexpected return",
                                 "return in void function", ctx.start.line)
+                return
             elif self.nodeTypes[varToReturn] != typeFunct:
                 self.add_errors(
                     "Type error", "return type and method type must be the same", ctx.start.line)
-        self.nonVoid[functParent]["isOk"] = True
+            self.nonVoid[functParent]["isOk"] = True
 
     def getAncestor(self, ctx, ancestorType="func"):
         parent = ctx.parentCtx
@@ -344,18 +344,79 @@ class CustomListener(DecafListener):
                 "Type error", "operand must not be void type", ctx.start.line)
         self.nodeTypes[ctx] = self.nodeTypes[op1]
 
+    def enterIf(self, ctx: DecafParser.IfContext):
+        num = randint(1, 10)
+        string = self.table.currentScope + "if" + str(num)
+        self.table.nest_scope(string)
+
+    def exitIf(self, ctx: DecafParser.IfContext):
+        self.table.exit_scope()
+
+    def enterWhile(self, ctx: DecafParser.WhileContext):
+        num = randint(1, 10)
+        string = self.table.currentScope + "while" + str(num)
+        self.table.nest_scope(string)
+
+    def exitWhile(self, ctx: DecafParser.WhileContext):
+        self.table.exit_scope()
+
+    def enterLocation(self, ctx: DecafParser.LocationContext):
+        # si aun no, debe ser un struct..
+        location = ctx.getChildCount()
+        # es un struct
+        if location > 1 and self.structsStack == []:
+            # variable del struct...
+            nameVar = ctx.getChild(0).getText()
+            # buscar la variable dentro de nuestro scope
+            definition = self.table.get_entry(
+                {"name": nameVar, "scope": self.table.currentScope})
+            # agregamos..
+            self.structsStack.insert(0, definition.varType)
+
+        elif location > 1:
+            toSearch = self.structsStack[0]
+            # definicion del struct
+            definition = self.table.table[toSearch]
+            # variableToLook
+            var = ctx.getChild(0).getText()
+            try:
+                obj = definition[var]
+                self.structsStack.insert(0, obj.varType)
+
+            except KeyError:
+                self.add_errors("Unexisting property in struct",
+                                "check the property", ctx.start.line)
+        elif location == 1 and self.structsStack != []:
+            toSearch = self.structsStack[0]
+            definition = self.table.table[toSearch]
+            var = ctx.getChild(0).getText()
+            try:
+                obj = definition[var]
+                self.structsStack = []
+                self.nodeTypes[ctx] = obj.varType
+                val = obj
+            except KeyError:
+                self.add_errors("Unexisting property in struct",
+                                "check the property", ctx.start.line)
+
     def exitLocation(self, ctx: DecafParser.LocationContext):
         child = ctx.getChild(0).getText()
 
-        #encuentra la variable a la cual se refiere, en el current scope
+        # encuentra la variable a la cual se refiere, en el current scope
         val = self.table.get_entry(
             {"name": child, "scope": self.table.currentScope})
 
-        # si no esta en el actual, buscamos en globales
+        # si no esta en el actual, buscamos en el contexto anterior
         if not val:
-            val = self.table.get_entry({"name": child, "scope": child})
-        
-        #si viene de una expresion la evaluamos
+            for elem in self.table.scopes:
+                if not val:
+                    val = self.table.get_entry({"name": child, "scope": elem})
+                else:
+                    break
+
+        # y si no.. es struct!
+
+        # si viene de una expresion la evaluamos
         expr = ctx.expression()
 
         if expr:
@@ -363,9 +424,6 @@ class CustomListener(DecafListener):
             if typeExpr != "int":
                 self.add_errors(
                     "Index error", "expression must return int type", ctx.start.line)
-
-        #si viene location?
-        loc = ctx.location()
 
         self.nodeTypes[ctx] = val.varType
 
@@ -387,11 +445,11 @@ class CustomListener(DecafListener):
                 "Type error", "expression must return bool type", ctx.start.line)
 
     def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
-        name = ctx.getChild(1).getText()
-        self.table.nest_scope(name)
-        entry = SymbolTableEntry("struct", name, "", "struct",
+        nameStruct = ctx.getChild(1).getText()
+        self.table.nest_scope(nameStruct)
+        entry = SymbolTableEntry("struct", nameStruct, [], "struct",
                                  self.table.parentScope, scope=self.table.currentScope)
-        self.table.add_entry(entry)
+        self.structs[nameStruct] = entry
         declarations = ctx.varDeclaration()
         for index, elem in enumerate(declarations):
             typeDec = elem.getChild(0).getChild(0).getText()
@@ -399,24 +457,30 @@ class CustomListener(DecafListener):
             if typeDec == "struct":
                 typeVar = elem.getChild(0).getChild(1).getText()
                 # check if exists
-                exists = self.table.get_entry(
-                    {"name": typeVar, "scope": typeVar})
+                try:
+                    exists = self.structs[name]
+
+                except KeyError:
+                    exists = None
                 if not exists:
                     self.add_errors("Struct declaration error",
                                     "Struct type does not exist", elem.start.line)
             else:
                 typeVar = elem.getChild(0).getChild(0).getText()
 
-            name = elem.getChild(1).getText()
+                name = elem.getChild(1).getText()
 
-            entry = SymbolTableEntry(typeVar, name, "", "structParam",
-                                     self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
-            self.table.add_entry(entry)
+                entry = SymbolTableEntry(
+                    typeVar, name, "", "structParam", self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
 
+                
+                lista = self.structs[nameStruct].value
+                lista.append(entry)
+                
 
     def exitStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
         self.table.exit_scope()
-    
+
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         scopes = self.table.table.keys()
         if "main" not in scopes:

@@ -11,29 +11,24 @@ int factorial(int n)
 
 void OutputInt(int n)
 {
+	if(true){
+		int x;
+		x = 5;
+	}
 }
 
-struct B
-{
-	int s;
+struct A {
+	int pp1;
+	int op2;
+	struct B op;
 };
-struct A
-{
-	int a;
-	struct B c;
-};
+
 
 int InputInt(void)
 {return 0;}
 
 void main(void)
 {
-	int a;
-	int x;
-	struct x ad;
-
-	a = factorial(1);
-	a = factorial(InputInt());
 	
 	
 }

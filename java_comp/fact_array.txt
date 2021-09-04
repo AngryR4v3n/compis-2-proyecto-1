@@ -11,6 +11,9 @@ int factorial(int n)
 
 void OutputInt(int n)
 {
+	if(true){
+		int x;
+	}
 }
 
 struct B
@@ -28,13 +31,8 @@ int InputInt(void)
 
 void main(void)
 {
-	int a;
-	int x;
-	struct x ad;
-
-	a = factorial(1);
-	a = factorial(InputInt());
-	
+	struct A ad;
+	ad.a = 3;	
 	
 }
 
