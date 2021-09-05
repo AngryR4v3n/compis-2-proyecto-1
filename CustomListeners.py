@@ -106,14 +106,19 @@ class CustomListener(DecafListener):
             updated = True
             i=0
             registry = None
+            typeNode = None
             while not registry and i < len(self.table.scopes):
                     registry = self.table.get_entry({"name": location, "scope": self.table.scopes[i]})
                     i+=1
             
             if registry:
                 registry.value = expression
-                typeNode = self.nodeTypes[expr]
-                #updated = self.table.update_entry(registry, typeNode)
+                try:
+                    typeNode = self.nodeTypes[expr]
+                except KeyError:
+                    pass
+
+                updated = typeNode == registry.varType
             else:
                 #buscamos en los otros scopes...
                 
@@ -630,12 +635,18 @@ class CustomListener(DecafListener):
                 self.add_errors(
                     "Index error", "expression must return int type", ctx.start.line)
 
-        #estamos en el head. obtenemos hijo derecho, si es struct
-            
-        self.nodeTypes[ctx] = val.varType
+        #si aun no hay nada... esta siendo igualado a algo inexistente.. creo
+        if not val:
+            self.add_errors("Assignment error", "assigning to unexisting variable", ctx.start.line)
+        else:
+            self.nodeTypes[ctx] = val.varType
 
     def exitLocationExp(self, ctx: DecafParser.LocationExpContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        
+        try:
+            self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        except KeyError:
+            pass
 
     def exitIf(self, ctx: DecafParser.IfContext):
         expr = ctx.expression()
