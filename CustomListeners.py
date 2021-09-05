@@ -66,7 +66,7 @@ class CustomListener(DecafListener):
         varName = ctx.parameter().getChild(1).getText()
         varType = ctx.parameter().getChild(0).getText()
         param = SymbolTableEntry(varType, varName, "", 'param',
-                                 self.table.parentScope, arrIndex=0, scope=self.table.currentScope)
+                                 self.table.parentScope, arrIndex=0, scope=self.table.currentScope, isParam=True)
 
         self.table.add_entry(param)
 
@@ -87,7 +87,7 @@ class CustomListener(DecafListener):
             varName = elem.getChild(1).getText()
             paramType = elem.getChild(0).getText()
             param = SymbolTableEntry(paramType, varName, "", 'param',
-                                     self.table.parentScope, arrIndex=index, scope=self.table.currentScope)
+                                     self.table.parentScope, arrIndex=index, scope=self.table.currentScope, isParam=True)
             self.table.add_entry(param)
         if methodReturnType != "void":
             self.nonVoid[ctx] = {"isOk": False, "obj": ctx}
@@ -228,7 +228,10 @@ class CustomListener(DecafListener):
 
     def exitReturnSt(self, ctx: DecafParser.ReturnStContext):
         varToReturn = ctx.getChild(1).getChild(0)
-        self.nodeTypes[ctx] = self.nodeTypes[varToReturn]
+        #revisamos struct case
+        while isinstance(varToReturn.getChild(varToReturn.getChildCount()-1), DecafParser.LocationContext):
+            varToReturn = varToReturn.getChild(varToReturn.getChildCount()-1)
+        
         functParent = self.getAncestor(ctx)
         if not (isinstance(functParent, (DecafParser.ParamMethodContext, DecafParser.ParamsMethodContext, DecafParser.EmptyMethodContext))):
             self.add_errors("Unexpected return",
@@ -346,6 +349,12 @@ class CustomListener(DecafListener):
             return
         exps = ctx.expression()
         val = exps.getChild(0)
+
+        
+         #revisamos struct case
+        while isinstance(val.getChild(val.getChildCount()-1), DecafParser.LocationContext):
+            val = val.getChild(val.getChildCount()-1)
+
         typeVar = self.nodeTypes[val]
         targetVar = self.table.get_entry_by_idx(
             {"scope": methodName, "index": 0})
@@ -440,7 +449,7 @@ class CustomListener(DecafListener):
             op2 = op2.getChild(op2.getChildCount()-1)
         tyOp1 = self.nodeTypes[op1]
         tyOp2 = self.nodeTypes[op2]
-        print("")
+        
         if tyOp1 not in ["int", "boolean", "char"] or tyOp2 not in ["int", "boolean", "char"]:
             self.add_errors(
                 "Type error", "operands must be primitive type", ctx.start.line)
@@ -451,6 +460,12 @@ class CustomListener(DecafListener):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
 
+        while isinstance(op1.getChild(op1.getChildCount()-1), DecafParser.LocationContext):
+            op1 = op1.getChild(op1.getChildCount()-1)
+
+        while isinstance(op2.getChild(op2.getChildCount()-1), DecafParser.LocationContext):
+            op2 = op2.getChild(op2.getChildCount()-1)
+
         if self.nodeTypes[op1] != "boolean" or self.nodeTypes[op2] != "boolean":
             self.add_errors(
                 "Type error", "operands must be bool type", ctx.start.line)
@@ -458,8 +473,24 @@ class CustomListener(DecafListener):
         self.nodeTypes[ctx] = "boolean"
 
     def exitOtherIntOp(self, ctx: DecafParser.OtherIntOpContext):
+
+        
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
+
+        if isinstance(op1.parentCtx, DecafParser.ParensOpContext):
+            op1 = ctx.getChild(0)
+        
+        if isinstance(op2.parentCtx, DecafParser.ParensOpContext):
+            op2 = ctx.getChild(2)
+        
+
+        while isinstance(op1.getChild(op1.getChildCount()-1), DecafParser.LocationContext):
+            op1 = op1.getChild(op1.getChildCount()-1)
+
+        while isinstance(op2.getChild(op2.getChildCount()-1), DecafParser.LocationContext):
+            op2 = op2.getChild(op2.getChildCount()-1)
+
         if self.nodeTypes[op1] != "int" or self.nodeTypes[op2] != "int":
             self.add_errors(
                 "Type error", "operands must be int type", ctx.start.line)
@@ -467,6 +498,9 @@ class CustomListener(DecafListener):
 
     def exitNotOp(self, ctx: DecafParser.NotOpContext):
         op1 = ctx.getChild(1).getChild(0)
+        while isinstance(op1.getChild(op1.getChildCount()-1), DecafParser.LocationContext):
+            op1 = op1.getChild(op1.getChildCount()-1)
+
         if self.nodeTypes[op1] != "bool":
             self.add_errors(
                 "Type error", "operand must be bool type", ctx.start.line)
@@ -474,6 +508,9 @@ class CustomListener(DecafListener):
 
     def exitParensOp(self, ctx: DecafParser.ParensOpContext):
         op1 = ctx.getChild(1).getChild(0)
+        while isinstance(op1.getChild(op1.getChildCount()-1), DecafParser.LocationContext):
+            op1 = op1.getChild(op1.getChildCount()-1)
+
         if self.nodeTypes[op1] == "void":
             self.add_errors(
                 "Type error", "operand must not be void type", ctx.start.line)
