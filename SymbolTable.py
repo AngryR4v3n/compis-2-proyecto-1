@@ -10,7 +10,6 @@ class SymbolTable():
         self.table = {self.currentScope: {}}
 
     def add_entry(self, entry) -> None:
-        # self.isCorrect(entry)
         obj = {
             entry.id: entry
         }
