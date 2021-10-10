@@ -32,26 +32,26 @@ declaration:
 	| methodDeclaration;
 
 varDeclaration: 
-	varType ID ';' #normalVar
-	| varType ID '[' NUM ']' ';' #arrVar;
+	varType ID ';'
+	| varType ID '[' NUM ']' ';';
 
 structDeclaration: 'struct' ID '{' (varDeclaration)* '}' ';';
 
 varType:
-	'int' #intType
-	| 'char' #charType
-	| 'boolean' #boolType
-	| 'struct' ID #structType
-	| structDeclaration #structDec
-	| 'void' #void;
+	'int' 
+	| 'char' 
+	| 'boolean'
+	| 'struct' ID
+	| structDeclaration
+	| 'void';
 
 methodDeclaration:
-	methodType ID '(' 'void'? ')' block #emptyMethod 
-	| methodType ID '(' parameter ')' block #paramMethod
-	| methodType ID '(' parameter (',' parameter)+ ')' block #paramsMethod;
+	methodType ID '(' 'void'? ')' block 
+	| methodType ID '(' parameter ')' block 
+	| methodType ID '(' parameter (',' parameter)+ ')' block ;
 methodType: 'int' | 'char' | 'boolean' | 'void';
 
-parameter: parameterType ID;
+parameter: parameterType ID | parameterType ID '[' ']';
 
 parameterType: 'int' | 'char' | 'boolean';
 
@@ -81,9 +81,14 @@ bool_literal: 'true' | 'false';
 
 location: (ID | ID '[' expression ']') ('.' location)?;
 
+methodCall:
+	ID '()' 
+	| ID '('expression')' 
+	| ID '('expression (','expression)+ ')'; 
+
 expression:
-	location #locationExp
-	| methodCall #methodCallExp
+ 	methodCall #methodCallExp
+	| location #locationExp
 	| literal #literalExp
 	| expression ('*' | '/' | '%') expression #otherIntOp
 	| expression ('+' | '-') expression #sumOp
@@ -94,10 +99,7 @@ expression:
 	| '!' expression #notOp
 	| '(' expression ')' #parensOp; 
 
-methodCall:
-	ID '()' #methodCallNoParam
-	| ID '(' expression ')' #methodCallParam
-	| ID '(' expression (',' expression)+ ')' #methodCallParams; 
+
 
 arith_op: '*' | '/' | '%' | '+' | '-';
 

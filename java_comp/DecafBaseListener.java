@@ -147,37 +147,13 @@ public class DecafBaseListener implements DecafListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterEmptyMethod(DecafParser.EmptyMethodContext ctx) { }
+	@Override public void enterMethodDeclaration(DecafParser.MethodDeclarationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitEmptyMethod(DecafParser.EmptyMethodContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterParamMethod(DecafParser.ParamMethodContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitParamMethod(DecafParser.ParamMethodContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterParamsMethod(DecafParser.ParamsMethodContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitParamsMethod(DecafParser.ParamsMethodContext ctx) { }
+	@Override public void exitMethodDeclaration(DecafParser.MethodDeclarationContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -375,6 +351,18 @@ public class DecafBaseListener implements DecafListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterMethodCall(DecafParser.MethodCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMethodCall(DecafParser.MethodCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterParensOp(DecafParser.ParensOpContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -502,42 +490,6 @@ public class DecafBaseListener implements DecafListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCondOp(DecafParser.CondOpContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterMethodCallNoParam(DecafParser.MethodCallNoParamContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitMethodCallNoParam(DecafParser.MethodCallNoParamContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterMethodCallParam(DecafParser.MethodCallParamContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitMethodCallParam(DecafParser.MethodCallParamContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterMethodCallParams(DecafParser.MethodCallParamsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitMethodCallParams(DecafParser.MethodCallParamsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

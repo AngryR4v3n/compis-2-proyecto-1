@@ -133,41 +133,15 @@ public interface DecafListener extends ParseTreeListener {
 	 */
 	void exitVoid(DecafParser.VoidContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code emptyMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
+	 * Enter a parse tree produced by {@link DecafParser#methodDeclaration}.
 	 * @param ctx the parse tree
 	 */
-	void enterEmptyMethod(DecafParser.EmptyMethodContext ctx);
+	void enterMethodDeclaration(DecafParser.MethodDeclarationContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code emptyMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
+	 * Exit a parse tree produced by {@link DecafParser#methodDeclaration}.
 	 * @param ctx the parse tree
 	 */
-	void exitEmptyMethod(DecafParser.EmptyMethodContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code paramMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterParamMethod(DecafParser.ParamMethodContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code paramMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitParamMethod(DecafParser.ParamMethodContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code paramsMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterParamsMethod(DecafParser.ParamsMethodContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code paramsMethod}
-	 * labeled alternative in {@link DecafParser#methodDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitParamsMethod(DecafParser.ParamsMethodContext ctx);
+	void exitMethodDeclaration(DecafParser.MethodDeclarationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DecafParser#methodType}.
 	 * @param ctx the parse tree
@@ -343,6 +317,16 @@ public interface DecafListener extends ParseTreeListener {
 	 */
 	void exitLocation(DecafParser.LocationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link DecafParser#methodCall}.
+	 * @param ctx the parse tree
+	 */
+	void enterMethodCall(DecafParser.MethodCallContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DecafParser#methodCall}.
+	 * @param ctx the parse tree
+	 */
+	void exitMethodCall(DecafParser.MethodCallContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code parensOp}
 	 * labeled alternative in {@link DecafParser#expression}.
 	 * @param ctx the parse tree
@@ -474,42 +458,6 @@ public interface DecafListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCondOp(DecafParser.CondOpContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code methodCallNoParam}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterMethodCallNoParam(DecafParser.MethodCallNoParamContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code methodCallNoParam}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitMethodCallNoParam(DecafParser.MethodCallNoParamContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code methodCallParam}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterMethodCallParam(DecafParser.MethodCallParamContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code methodCallParam}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitMethodCallParam(DecafParser.MethodCallParamContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code methodCallParams}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterMethodCallParams(DecafParser.MethodCallParamsContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code methodCallParams}
-	 * labeled alternative in {@link DecafParser#methodCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitMethodCallParams(DecafParser.MethodCallParamsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DecafParser#arith_op}.
 	 * @param ctx the parse tree

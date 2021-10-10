@@ -12,8 +12,22 @@ struct B
 	struct A c;
 };
 
+struct C
+{
+	int b;
+	struct A c;
+};
+
 struct A y;
 struct A z;
+
+void OutputInt(int n)
+{
+}
+
+int InputInt(void)
+{return 0;}
+
 
 int factorial(int n)
 {
@@ -23,46 +37,18 @@ int factorial(int n)
 	{return n*factorial(n-1);}
 }
 
-void OutputInt(int n)
-{
-}
-
-int InputInt(void)
-{return 0;}
 
 int ReturnNumber(void)
 {return z.a;}
 
 void main(void)
 {
-	struct B y[5];
-	int i;
-	int j;
-	int k;	
+	struct C y[3];
+	y[1].b = 'a';
 
-
-	i = 0;
-	j=0;
-	z.a = 3;	
-
-	while(i<=10)
-	{
-		y[j].b[0]=InputInt();
-		
-		if(y[j].b[0]==5)
-		{
-			y[j].b[0]=z.a;
-			k=factorial(ReturnNumber());
-			OutputInt(k);
-		}		
-
-		y[j].c.a=factorial(y[j].b[0]);
-		OutputInt(y[j].c.a);
-		i = i + 1;
-	}
-}
-
-
+	
 
 
 }
+
+
