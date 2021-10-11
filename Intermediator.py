@@ -9,11 +9,13 @@ class Intermediator:
         self.f = open(file, 'w')
         
 
-    def writeLine(self, line):
-        self.f.write(f'{line}\n')
+    def writeLine(self, line, tabs=0):
+        ident = tabs * '\t'
+        self.f.write(f'{ident}{line}\n')
 
-    def write(self, line):
-        self.f.write(line)
+    def write(self, line, tabs=0):
+        ident = tabs * '\t'
+        self.f.write(f'{ident}{line}')
 
     def getVariableCode(self, var, scope):
         if scope == 'global':

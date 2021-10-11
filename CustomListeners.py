@@ -189,7 +189,7 @@ class CustomListener(DecafListener):
 
     
         # CODIGO INTERMEDIO
-        self.writer.writeLine(f'function {methodName}: ')
+        self.writer.writeLine(f'function {methodName}: ', self.nest-1)
 
     
     def enterParameter(self, ctx: DecafParser.ParameterContext):
@@ -358,7 +358,7 @@ class CustomListener(DecafListener):
         
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ')
+        self.writer.write(f'{targetTemp.name} = ', self.nest)
 
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} + {x2}')
@@ -391,7 +391,7 @@ class CustomListener(DecafListener):
 
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ')
+        self.writer.write(f'{targetTemp.name} = ', self.nest)
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} {operation} {x2}')
         print('')
@@ -567,7 +567,7 @@ class CustomListener(DecafListener):
             self.add_errors('Assignment error', 'variable and value are not the same', ctx.start.line)
 
         assign, val = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{assign} = {val}')
+        self.writer.writeLine(f'{assign} = {val}', self.nest)
 
     
     def enterIf(self, ctx: DecafParser.IfContext):
@@ -581,10 +581,10 @@ class CustomListener(DecafListener):
         storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
         
         #condicional
-        self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}')
+        self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
         
         
-        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0')
+        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0', self.nest)
 
     def exitIf(self, ctx: DecafParser.IfContext):
         #lo que esta dentro
@@ -597,7 +597,7 @@ class CustomListener(DecafListener):
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'if expression must return boolean', ctx.start.line)
 
-        self.writer.writeLine(f'EXIT IF_{self.nest}')
+        self.writer.writeLine(f'EXIT IF_{self.nest}', self.nest)
 
 
     def exitWhile(self, ctx: DecafParser.WhileContext):
