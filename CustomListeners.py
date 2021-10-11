@@ -423,8 +423,8 @@ class CustomListener(DecafListener):
 
     
     def exitLocation(self, ctx: DecafParser.LocationContext):
-        
-        if ctx.location():
+        var = None
+        if ctx.location() != None:
             if self.structStack != []:
                 currentTable = self.structStack.pop()
 
@@ -439,7 +439,13 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Struct definition error', 'property is not a struct', ctx.start.line)
-
+            else:
+                var = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
+                if var:
+                    self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                else:
+                    self.nodeTypes[ctx] = '-1'
+                    self.add_errors('Location error', 'undefined location', ctx.start.line)
         elif isinstance(ctx.parentCtx, DecafParser.LocationContext) and not ctx.location():
             if self.structStack != []:
                 currentTable = self.structStack.pop()
@@ -453,13 +459,14 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Struct definition error', "Property not found on struct.", ctx.start.line)   
-                #could delete
+            #could delete
+       
 
-                """
-                else:
-                    self.nodeTypes[ctx] = '-1'
-                    self.addError(ctx.start.line, "Parent struct doesn't have this property.")
-                """
+                
+            else:
+                self.nodeTypes[ctx] = '-1'
+                self.addError(ctx.start.line, "Parent struct doesn't have this property.")
+                
         else:
             var = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
             if var:
@@ -475,11 +482,15 @@ class CustomListener(DecafListener):
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Location error', 'access expression must return an int', ctx.start.line)
                 if var:
+                    self.nodeTypes[ctx] = var.varType
                     if not var.isArray:
                         self.nodeTypes[ctx] = '-1'
                         self.add_errors('Location error', 'variable is not an array', ctx.start.line)
+
             else:
                 if var:
+                    self.nodeTypes[ctx] = var.varType
+
                     if var.isArray:
                         self.nodeTypes[ctx] = '-1'
                         self.add_errors('Access error', 'index needs to be provided', ctx.start.line)
