@@ -1,0 +1,9 @@
+function factorial: 
+t0 = vArr[8] == 0
+IF_1 t0 > 0
+t1 = 3 * 5
+t2 = G[4] + t1
+G[0] = t2
+EXIT IF_1
+function main: 
+vArr[28] = 3

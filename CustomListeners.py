@@ -1,5 +1,6 @@
 from DecafListener import DecafListener
 from DecafParser import DecafParser
+from Intermediator import Intermediator
 from SymbolTable import StructTableItem, TableItem, ScopeTableItem
 
 class CustomListener(DecafListener):
@@ -24,6 +25,11 @@ class CustomListener(DecafListener):
         self.nodeTypes = {}
         #error management
         self.errors = []
+
+        #intermedio
+        self.writer = Intermediator('.code.txt')
+        self.nodeTempVars = {}
+        self.tempCount = 0
 
     #ERRORS
     def add_errors(self, errorTitle, entry, line):
@@ -79,7 +85,7 @@ class CustomListener(DecafListener):
         tempSymbolTable = self.scopes[self.currentScope].symbolTable
 
         if name not in tempSymbolTable:
-            tempSymbolTable[name] = TableItem(varType, name, num, decafType, currentVarSize, isArray, 0)
+            tempSymbolTable[name] = TableItem(varType, name, num, decafType, currentVarSize, isArray, self.offset)
             self.offset += currentVarSize
             canAdd = True
         else:
@@ -87,6 +93,11 @@ class CustomListener(DecafListener):
 
         self.scopes[self.currentScope].symbolTable = tempSymbolTable
         return canAdd
+
+    def addTempVar(self, varType, num, isArray):
+        self.addVar(varType, f't{self.tempCount}', 'tempVar', num, isArray)
+        self.tempCount += 1
+        
 
     #STRUCT MANAGEMENT
     def addStruct(self, structId):
@@ -145,16 +156,19 @@ class CustomListener(DecafListener):
                 self.add_errors('Undeclared struct', 'struct has not been defined', ctx.start.line)
             else:
                 #TODO: Revisar que exista array de structs..
-                self.addVar(varType, varId, 'structVar', 1, isArray)
+                if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
+                    self.addVar(varType, varId, 'structVar', 1, isArray)
         else:
+            if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
+                added = self.addVar(varType, varId, "var", value, isArray)
 
-            added = self.addVar(varType, varId, "var", value, isArray)
+                if added:
+                    self.nodeTypes[ctx] = 'void'
+                else:
+                    self.nodeTypes[ctx] = '-1'
+                    self.add_errors("Scope error", "variable already exists!", ctx.start.line)
 
-            if added:
-                self.nodeTypes[ctx] = 'void'
-            else:
-                self.nodeTypes[ctx] = '-1'
-                self.add_errors("Scope error", "variable already exists!", ctx.start.line)
+
 
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
@@ -164,7 +178,6 @@ class CustomListener(DecafListener):
         self.currentMethodName = methodName
         self.pushScope(methodName)
 
-
         #Se crea el scope
         added = self.addScope(self.previousScope, methodType)
 
@@ -173,6 +186,10 @@ class CustomListener(DecafListener):
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors("Method declaration error","Method already exists!",ctx.start.line )
+
+    
+        # CODIGO INTERMEDIO
+        self.writer.writeLine(f'function {methodName}: ')
 
     
     def enterParameter(self, ctx: DecafParser.ParameterContext):
@@ -229,7 +246,7 @@ class CustomListener(DecafListener):
             varId = ctx.getChild(0).getText()
             #si no estamos buscando dentro de un struct..
             if (self.structStack == []):
-                structVarType = self.findSymbolTableEntry(varId, self.currentScope)
+                structVarType, scope = self.findSymbolTableEntry(varId, self.currentScope)
                 structToUse = self.searchStruct(structVarType.varType)
                 self.structStack.append(structToUse)
             else:
@@ -262,6 +279,7 @@ class CustomListener(DecafListener):
     def exitBlock(self, ctx: DecafParser.BlockContext):
         #Se sale de un scope.
         current = self.methodFinder(self.currentScope)
+        self.nest -= 1
         self.pushScope(current.parent)
 
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
@@ -269,10 +287,11 @@ class CustomListener(DecafListener):
         if (methodName == 'main'):
             self.mainFound = True
 
-        self.nestedCounter = 1
+        self.nest = 1
         self.currentMethodName = "global"
 
         self.pushScope("global")
+    
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
         name = ctx.getChild(0).getText()
         args = ctx.getChild(2).getText()
@@ -324,12 +343,26 @@ class CustomListener(DecafListener):
     def exitSumOp(self, ctx: DecafParser.SumOpContext):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
-
+        operator = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'int'
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
+
+                
+        #creamos el lado izquierdo del three address code..
+        self.addTempVar('int', 1, False)
+        #obtenemos la variable recien creada
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+        
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+        self.writer.write(f'{targetTemp.name} = ')
+
+        x1, x2 = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{x1} + {x2}')
+        
     
     def exitRelOp(self, ctx: DecafParser.RelOpContext):
         op1 = ctx.getChild(0)
@@ -340,15 +373,28 @@ class CustomListener(DecafListener):
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
+   
     def exitOtherIntOp(self, ctx: DecafParser.OtherIntOpContext):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
-
+        operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'int'
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
+
+         #creamos el lado izquierdo del three address code..
+        self.addTempVar('int', 1, False)
+        #obtenemos la variable recien creada
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+        self.writer.write(f'{targetTemp.name} = ')
+        x1, x2 = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{x1} {operation} {x2}')
+        print('')
     
     def exitLiteralExp(self, ctx: DecafParser.LiteralExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
@@ -440,7 +486,7 @@ class CustomListener(DecafListener):
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Struct definition error', 'property is not a struct', ctx.start.line)
             else:
-                var = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
+                var, scope = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
                 if var:
                     self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
                 else:
@@ -468,7 +514,7 @@ class CustomListener(DecafListener):
                 self.addError(ctx.start.line, "Parent struct doesn't have this property.")
                 
         else:
-            var = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
+            var, scope = self.findSymbolTableEntry(ctx.getChild(0).getText(), self.currentScope)
             if var:
                 self.nodeTypes[ctx] = var.varType
 
@@ -520,7 +566,26 @@ class CustomListener(DecafListener):
             self.nodeTypes = '-1'
             self.add_errors('Assignment error', 'variable and value are not the same', ctx.start.line)
 
+        assign, val = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{assign} = {val}')
+
+    
+    def enterIf(self, ctx: DecafParser.IfContext):
+        expr = ctx.expression()
+
+        op1, op2 = self.writer.getOperators(self, expr.getChild(0), expr.getChild(2))
+        operator = expr.getChild(1).getText()
+
+        #creamos temp
+        self.addTempVar('int', 1, False)
+        storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
         
+        #condicional
+        self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}')
+        
+        
+        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0')
+
     def exitIf(self, ctx: DecafParser.IfContext):
         #lo que esta dentro
         expr = ctx.getChild(2)
@@ -531,6 +596,8 @@ class CustomListener(DecafListener):
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'if expression must return boolean', ctx.start.line)
+
+        self.writer.writeLine(f'EXIT IF_{self.nest}')
 
 
     def exitWhile(self, ctx: DecafParser.WhileContext):
@@ -546,9 +613,11 @@ class CustomListener(DecafListener):
             
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         
-        if "main" not in self.scopes:
+        if "main" not in self.scopes.keys():
             self.add_errors("Missing method",
                             "missing main() method", ctx.start.line)
+
+        
 
     def findSymbolTableEntry(self, name, scope):
         targetSymbolTable = self.scopes[scope].symbolTable
@@ -561,14 +630,18 @@ class CustomListener(DecafListener):
             if scope == 'global' and not search:
                 self.add_errors('Entity not found', 'var has not been declared', None)
                 return 
-            else:                
+            elif not search and scope != 'global': 
                 otherScope = self.scopes.get(scope).parent
+
+            elif scope == 'global' and search:
+                return search, scope
 
             #busca recursivamente hacia arriba
             if otherScope:
-                search = self.findSymbolTableEntry(name,otherScope)
+                search, scope = self.findSymbolTableEntry(name,otherScope)
+                return search, scope
 
-        return search
+        return search, scope
 
     def methodFinder(self, methodId):
         obj = self.scopes[methodId]
