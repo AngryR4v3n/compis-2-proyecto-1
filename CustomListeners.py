@@ -274,7 +274,12 @@ class CustomListener(DecafListener):
 
         else:
             self.nodeTypes[ctx] = '-1'
-            
+
+        #INTERMEDIATE CODE
+        #Obtiene el IF_TRUE, IF_FALSE, WHILE_TRUE
+        self.writer.getCallers(self,parentCtx, ctx)
+
+
     
     def exitBlock(self, ctx: DecafParser.BlockContext):
         #Se sale de un scope.
@@ -358,7 +363,7 @@ class CustomListener(DecafListener):
         
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ', self.nest)
+        self.writer.write(f'{targetTemp.name} = ', self.nest+1)
 
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} + {x2}')
@@ -391,7 +396,7 @@ class CustomListener(DecafListener):
 
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ', self.nest)
+        self.writer.write(f'{targetTemp.name} = ', self.nest+1)
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} {operation} {x2}')
         print('')
@@ -567,7 +572,7 @@ class CustomListener(DecafListener):
             self.add_errors('Assignment error', 'variable and value are not the same', ctx.start.line)
 
         assign, val = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{assign} = {val}', self.nest)
+        self.writer.writeLine(f'{assign} = {val}', self.nest+1)
 
     
     def enterIf(self, ctx: DecafParser.IfContext):
@@ -584,7 +589,9 @@ class CustomListener(DecafListener):
         self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
         
         
-        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0', self.nest)
+        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
+        self.writer.writeLine(f'GOTO IF_FALSE{self.nest}', self.nest)
+
 
     def exitIf(self, ctx: DecafParser.IfContext):
         #lo que esta dentro

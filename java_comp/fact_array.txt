@@ -18,7 +18,13 @@ int factorial(int n)
 	int x;
 	if (n==0)
 	{
-		ax = bx + 3 * 5;
+		if (x==1){
+			ax = bx + 3 * 5;
+		} else{
+			ax = 3;
+
+		}
+
 	}
 	else
 	{
@@ -35,6 +41,7 @@ void main(void)
 
 
 }
+
 
 
 

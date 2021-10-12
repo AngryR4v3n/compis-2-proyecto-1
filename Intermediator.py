@@ -55,5 +55,24 @@ class Intermediator:
 
         return res1, res2
 
+    
+    def getCallers(self, obj, parentCtx, ctx):
+
+        #TODO WHILE CASE
+        if isinstance(parentCtx, DecafParser.IfContext):
+            for i, child in enumerate(parentCtx.children):
+                if child == ctx:
+                    idx = i
+                    break
+            #Si es el ultimo bloque y la cantidad de Block context es mayor a 1, es el false
+            blockNumber = parentCtx.block()
+
+            if len(blockNumber) > 1 and idx == len(parentCtx.children) - 1:
+                #ELSE
+                self.writeLine(f'IF_FALSE_{obj.nest-1}', obj.nest-1)
+            else:
+                #TRUE
+                self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
+
 
 
