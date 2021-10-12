@@ -1,9 +1,10 @@
 function main: 
-	vArr[0] = 0
+	vArr[4] = 0
 	WHILE_0
 	t0 = true
 	IF_1 t0 > 0 GOTO IF_TRUE1
 	IF_TRUE_1
-		vArr[5] = 0
+		vArr[13] = 0
 		GOTO WHILE_0
 	END WHILE_0
+END main

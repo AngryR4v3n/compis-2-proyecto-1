@@ -158,18 +158,35 @@ class CustomListener(DecafListener):
                 self.add_errors('Undeclared struct', 'struct has not been defined', ctx.start.line)
             else:
                 #TODO: Revisar que exista array de structs..
+                isArray = ctx.NUM()
+                if not isArray:
+                    isArray = False
+                    num = 1
+                else:
+                    isArray = True
+                    #TODO: Mejorar obtener el numero del array...
+                    num = int(ctx.getChild(3).getText())
                 if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
-                    self.addVar(varType, varId, 'structVar', 1, isArray)
+                    self.addVar(varType, varId, 'structVar', num, isArray)
         else:
             if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
-                added = self.addVar(varType, varId, "var", value, isArray)
+                #TODO: Revisar que exista array de structs..
+                isArray = ctx.NUM()
+                if not isArray:
+                    isArray = False
+                    num = 1
+                else:
+                    isArray = True
+                    #TODO: Mejorar obtener el numero del array...
+                    num = int(ctx.getChild(3).getText())
+                
+                added = self.addVar(varType, varId, "var", num, isArray)
 
                 if added:
                     self.nodeTypes[ctx] = 'void'
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors("Scope error", "variable already exists!", ctx.start.line)
-
 
 
 
@@ -253,7 +270,6 @@ class CustomListener(DecafListener):
                 self.structStack.append(structToUse)
             else:
                 #si no buscamos en el ultimo, la variable del struct y si esta en su def
-
                 try:
                     structVarType = self.structStack[-1].structMembers[varId]
                 except:
@@ -298,6 +314,7 @@ class CustomListener(DecafListener):
         self.currentMethodName = "global"
 
         self.pushScope("global")
+        self.writer.getTails(self, ctx.parentCtx, ctx)
     
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
         name = ctx.getChild(0).getText()

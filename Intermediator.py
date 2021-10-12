@@ -7,6 +7,7 @@ class Intermediator:
     def __init__(self, file) -> None:
         self.file = file
         self.f = open(file, 'w')
+        self.sizes = {'int': 4, 'char': 1, 'boolean': 1}
         
 
     def writeLine(self, line, tabs=0):
@@ -17,24 +18,36 @@ class Intermediator:
         ident = tabs * '\t'
         self.f.write(f'{ident}{line}')
 
-    def getVariableCode(self, var, scope):
+    def getVariableCode(self, var, scope, isArray=False, num=0):
         if scope == 'global':
             return f'G[{var.offset}]'
-
+        #para los t's
         elif var.decafType == 'tempVar':
             return var.name
-        else: 
+        #variables normales, solo el offset
+        elif not isArray: 
             return f'vArr[{var.offset}]'
+        
+        #esto no funcionara con arrays de structs
+        elif isArray:
+            return f'vArr[{var.offset + int(num) * self.sizes[var.varType]}]'
 
     def getOperators(self, obj, op1, op2):
         #3 casos por operador: Variable, literal y expresion
         res1 = None
         res2 = None
-        #TODO IDENTIFICAR STRUCTS
+        #TODO IDENTIFICAR STRUCTS, ARRAYS
 
         if isinstance(op1, DecafParser.LocationExpContext) or isinstance(op1, DecafParser.LocationContext):
             res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getText(), obj.currentScope)
-            res1 = self.getVariableCode(res1, scope)
+
+            #Determinamos si es ARRAY
+            if res1.isArray:
+                #cambia el codigo de offset
+                num = op1.getChild(2).getText()
+                res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
+            else:
+                res1 = self.getVariableCode(res1, scope)
 
         elif isinstance(op1, DecafParser.LiteralExpContext):
             res1 = op1.getChild(0).getText()
@@ -87,9 +100,13 @@ class Intermediator:
             self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
 
     def getTails(self, obj, parentCtx, ctx):
+
         if isinstance(ctx, DecafParser.WhileContext):
             self.writeLine(f'GOTO WHILE_{obj.nest-1}', obj.nest+1)
             self.writeLine(f'END WHILE_{obj.nest-1}', obj.nest)
+
+        elif isinstance(ctx, DecafParser.MethodDeclarationContext):
+            self.writeLine(f'END {ctx.getChild(1).getText()}')
 
 
         

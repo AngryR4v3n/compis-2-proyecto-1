@@ -1,8 +1,8 @@
 class Program{
 	void main(void)
 	{
-		int x;
-		x = 0;
+		int x[3];
+		x[1] = 0;
 		while (true)
 		{
 			int y;
