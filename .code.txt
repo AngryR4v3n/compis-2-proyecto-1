@@ -1,19 +1,9 @@
-function factorial: 
-	t0 = vArr[8] == 0
-	IF_1 t0 > 0 GOTO IF_TRUE1
-	GOTO IF_FALSE1
-	IF_TRUE_1
-		t1 = vArr[12] == 1
-		IF_2 t1 > 0 GOTO IF_TRUE2
-		GOTO IF_FALSE2
-		IF_TRUE_2
-				t2 = 3 * 5
-				t3 = G[4] + t2
-				G[0] = t3
-		IF_FALSE_2
-				G[0] = 3
-		EXIT IF_2
-	IF_FALSE_1
-	EXIT IF_1
 function main: 
-		vArr[32] = 3
+	vArr[0] = 0
+	WHILE_0
+	t0 = true
+	IF_1 t0 > 0 GOTO IF_TRUE1
+	IF_TRUE_1
+		vArr[5] = 0
+		GOTO WHILE_0
+	END WHILE_0

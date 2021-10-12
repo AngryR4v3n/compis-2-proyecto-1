@@ -1,47 +1,12 @@
-class Program
-{
-struct A
-{
-	int a[3];
-};
-
-struct B
-{
-	int b;
-	struct A c;
-};
-
-int ax;
-int bx;
-int factorial(int n)
-{
-	int x;
-	if (n==0)
+class Program{
+	void main(void)
 	{
-		if (x==1){
-			ax = bx + 3 * 5;
-		} else{
-			ax = 3;
-
+		int x;
+		x = 0;
+		while (true)
+		{
+			int y;
+			y = 0;
 		}
-
 	}
-	else
-	{
-		return 1;
-	}
-
 }
-
-void main(void)
-{
-	struct B y;
-	y.c.a[1] = 3;
-}
-
-
-}
-
-
-
-

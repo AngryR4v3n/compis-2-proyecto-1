@@ -28,7 +28,9 @@ class CustomListener(DecafListener):
 
         #intermedio
         self.writer = Intermediator('.code.txt')
+        #mauska herramienta misteriosa! ;)
         self.nodeTempVars = {}
+        #contador de Ts 
         self.tempCount = 0
 
     #ERRORS
@@ -43,7 +45,7 @@ class CustomListener(DecafListener):
                 return int(num) * self.sizes[tipo]
             else:
                 #offset struct.
-                return 0
+                return int(num) * self.structs[tipo].size
         except KeyError:
             pass
 
@@ -318,6 +320,12 @@ class CustomListener(DecafListener):
             else:
                 self.nodeTypes[ctx] = '-1'
                 self.add_errors('Method call error', 'param missmatch, check method call', ctx.start.line)
+
+        #INTERMEDIATE
+        self.writer.writeLine(f'CALL {name}', self.nest)
+
+        
+        
     
     def exitMethodCallExp(self, ctx: DecafParser.MethodCallExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.methodCall()]
@@ -343,6 +351,10 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Return type error', f'check method return type and returning entity', ctx.start.line)
+
+        #INTERMEDIATE
+        op1, op2 = self.writer.getOperators(self, ctx.getChild(1), None)
+        self.writer.writeLine(f'RETURN {op1}', self.nest)
     
     
     def exitSumOp(self, ctx: DecafParser.SumOpContext):
@@ -497,6 +509,7 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Location error', 'undefined location', ctx.start.line)
+        
         elif isinstance(ctx.parentCtx, DecafParser.LocationContext) and not ctx.location():
             if self.structStack != []:
                 currentTable = self.structStack.pop()
@@ -510,10 +523,7 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Struct definition error', "Property not found on struct.", ctx.start.line)   
-            #could delete
-       
-
-                
+                       
             else:
                 self.nodeTypes[ctx] = '-1'
                 self.addError(ctx.start.line, "Parent struct doesn't have this property.")
@@ -572,22 +582,26 @@ class CustomListener(DecafListener):
             self.add_errors('Assignment error', 'variable and value are not the same', ctx.start.line)
 
         assign, val = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{assign} = {val}', self.nest+1)
+        self.writer.writeLine(f'{assign} = {val}', self.nest)
 
     
     def enterIf(self, ctx: DecafParser.IfContext):
         expr = ctx.expression()
 
         op1, op2 = self.writer.getOperators(self, expr.getChild(0), expr.getChild(2))
-        operator = expr.getChild(1).getText()
+
+        if expr.getChildCount() > 1:
+            operator = expr.getChild(1).getText()
 
         #creamos temp
-        self.addTempVar('int', 1, False)
+        self.addTempVar('boolean', 1, False)
         storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
         
         #condicional
-        self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
-        
+        if expr.getChildCount() > 1:
+            self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
+        else:
+            self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         
         self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
         self.writer.writeLine(f'GOTO IF_FALSE{self.nest}', self.nest)
@@ -606,6 +620,28 @@ class CustomListener(DecafListener):
 
         self.writer.writeLine(f'EXIT IF_{self.nest}', self.nest)
 
+    
+    def enterWhile(self, ctx: DecafParser.WhileContext):
+        expr = ctx.expression()
+        
+        op1, op2 = self.writer.getOperators(self, expr.getChild(0), expr.getChild(2))
+        if expr.getChildCount() > 1:
+            operator = expr.getChild(1).getText()
+        #creamos temp
+        self.addTempVar('boolean', 1, False)
+        storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
+        
+        #head
+        self.writer.writeLine(f'WHILE_{self.nest-1}', self.nest)
+        #condicional
+        if expr.getChildCount() > 1:
+            self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
+        else:
+            self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
+        
+        
+        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
+
 
     def exitWhile(self, ctx: DecafParser.WhileContext):
         #lo que esta dentro
@@ -617,7 +653,10 @@ class CustomListener(DecafListener):
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'while expression must return boolean', ctx.start.line)
-            
+        
+        #intermediate
+        self.writer.getTails(self, ctx.parentCtx, ctx)
+    
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         
         if "main" not in self.scopes.keys():

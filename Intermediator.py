@@ -28,12 +28,18 @@ class Intermediator:
 
     def getOperators(self, obj, op1, op2):
         #3 casos por operador: Variable, literal y expresion
+        res1 = None
+        res2 = None
+        #TODO IDENTIFICAR STRUCTS
 
         if isinstance(op1, DecafParser.LocationExpContext) or isinstance(op1, DecafParser.LocationContext):
             res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getText(), obj.currentScope)
             res1 = self.getVariableCode(res1, scope)
 
         elif isinstance(op1, DecafParser.LiteralExpContext):
+            res1 = op1.getChild(0).getText()
+
+        elif isinstance(op1, DecafParser.LiteralContext):
             res1 = op1.getChild(0).getText()
 
         elif isinstance(op1, DecafParser.MethodCallExpContext):
@@ -47,6 +53,9 @@ class Intermediator:
 
         elif isinstance(op2, DecafParser.LiteralExpContext):
             res2 = op2.getChild(0).getText()
+
+        elif isinstance(op2, DecafParser.LiteralContext):
+            res2 = op1.getChild(0).getText()
 
         elif isinstance(op2, DecafParser.MethodCallExpContext) or isinstance(op2, DecafParser.OtherIntOpContext) or isinstance(op2, DecafParser.SumOpContext):
             targetName = obj.nodeTempVars[op2]
@@ -73,6 +82,15 @@ class Intermediator:
             else:
                 #TRUE
                 self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
+        
+        elif isinstance(parentCtx, DecafParser.WhileContext):
+            self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
+
+    def getTails(self, obj, parentCtx, ctx):
+        if isinstance(ctx, DecafParser.WhileContext):
+            self.writeLine(f'GOTO WHILE_{obj.nest-1}', obj.nest+1)
+            self.writeLine(f'END WHILE_{obj.nest-1}', obj.nest)
 
 
+        
 
