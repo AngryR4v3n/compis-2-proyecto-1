@@ -13,10 +13,14 @@ class Program
 
     void main(void)
     {
-		int x;
-        struct X H;
-        H.n = H.o.z + x;
+        struct X H[4];
+        int x[3];
+        int y;
+        H[1].m = x[0] + y;
     }
 }
       
+
+
+
 

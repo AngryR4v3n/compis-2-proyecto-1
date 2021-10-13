@@ -1,4 +1,4 @@
 function main: 
-	t0 = vArr[12] + vArr[0]
-	vArr[8] = t0
+	t0 = vArr[48] + vArr[60]
+	vArr[12] = t0
 END main

@@ -19,68 +19,99 @@ class Intermediator:
         self.f.write(f'{ident}{line}')
 
     def getVariableCode(self, var, scope, obj=None, fullCall=None, isStruct=False, isArray=False, num=0):
+        prefix = ''
         if scope == 'global':
-            return f'G[{var.offset}]'
+            prefix = 'G'
+        else:
+            prefix = 'vArr'
         #para los t's
-        elif var.decafType == 'tempVar':
+        if var.decafType == 'tempVar':
             return var.name
         #variables normales, solo el offset
         elif not isArray and not isStruct: 
-            return f'vArr[{var.offset}]'
+            return f'{prefix}[{var.offset}]'
         
         #esto no funcionara con arrays de structs
         elif isArray and not isStruct:
-            return f'vArr[{var.offset + int(num) * self.sizes[var.varType]}]'
+            return f'{prefix}[{var.offset + int(num) * self.sizes[var.varType]}]'
 
-        elif isStruct:
+        elif isStruct and not isArray:
 
             offset = obj.getStructPropertyOffset(fullCall, var)
 
-            return f'vArr[{offset}]'
+            return f'{prefix}[{offset}]'
 
+        elif isArray and isStruct:
+            #donde inicia la variable
+            offset = obj.getStructPropertyOffset(fullCall, var)
+            structSize = obj.searchStruct(var.varType).size
+            return f'{prefix}[{structSize * int(num) + var.offset + offset}]'
 
 
     def getOperators(self, obj, op1, op2):
         #3 casos por operador: Variable, literal y expresion
         res1 = None
         res2 = None
-        #TODO IDENTIFICAR STRUCTS
+        #TODO IDENTIFICAR ARRAY STRUCTS...
         if isinstance(op1, DecafParser.LocationExpContext) or isinstance(op1, DecafParser.LocationContext):
             
             if isinstance(op1, DecafParser.LocationExpContext):
+                
                 #Si el hijo del op tiene mas de 1 hijo, es un struct.
-                if op1.getChild(0).getChildCount() > 1:
+                if op1.getChild(0).getText().find('.') > -1:
                     res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getChild(0).getText(), obj.currentScope)
 
                     #Determinamos si es ARRAY
                     if res1.isArray:
-                        num = op1.getChild(2).getText()
+
+                        #ARRAY Y STRUCT
+                        num = int(obj.getNumber(op1))
+                        res1 = self.getVariableCode(res1, scope, fullCall=op1.getChild(0).getText(), obj=obj, isArray=True, isStruct=True, num=num)
+                    else:
+                        #SOLO ES STRUCT
+                        res1 = self.getVariableCode(res1, scope, fullCall=op1.getChild(0).getText(), obj=obj, isStruct=True)
+
+                #Si no, variable normal
+                else:
+                    res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getChild(0).getText(), obj.currentScope)
+                    #Determinamos si es ARRAY
+                    if res1.isArray:
+
+                        #ARRAY 
+                        num = int(obj.getNumber(op1))
                         res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
                     else:
-                        res1 = self.getVariableCode(res1, scope, fullCall=op1.getChild(0).getText(), obj=obj, isStruct=True)
+                        #VARIABLE NORMAL
+                        res1 = self.getVariableCode(res1, scope, obj=obj)
+      
             else:
                 #Aqui el conteo no tiene que ser sobre el hijo si no sobre directamente el objeto
-                if op1.getChildCount() > 1:
+                #Si es struct.
+                if op1.getText().find('.') > -1:
                     res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getText(), obj.currentScope)
 
 
                     #Determinamos si es ARRAY
                     if res1.isArray:
-                        num = op1.getChild(2).getText()
-                        res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
+
+                        #ARRAY Y STRUCT
+                        num = int(obj.getNumber(op1))
+                        res1 = self.getVariableCode(res1, scope, fullCall=op1.getText(), obj=obj, isArray=True, isStruct=True, num=num)
                     else:
+                        #SOLO ES STRUCT
                         res1 = self.getVariableCode(res1, scope, fullCall=op1.getText(), obj=obj, isStruct=True)
 
-
+                #Variable normal
                 else:
                     res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getText(), obj.currentScope)
 
                     #Determinamos si es ARRAY
                     if res1.isArray:
-                        #cambia el codigo de offset
+                        #ARRAY
                         num = op1.getChild(2).getText()
                         res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
                     else:
+                        #VARIABLE NORMAL
                         res1 = self.getVariableCode(res1, scope)
 
 
@@ -98,14 +129,65 @@ class Intermediator:
 
         
         if isinstance(op2, DecafParser.LocationExpContext) or isinstance(op2, DecafParser.LocationContext):
-            res2, scope = obj.findSymbolTableEntry(op2.getChild(0).getText(), obj.currentScope)
-            #Determinamos si es ARRAY
-            if res2.isArray:
-                #cambia el codigo de offset
-                num = op2.getChild(2).getText()
-                res2 = self.getVariableCode(res2, scope, isArray=True, num=num)
+            
+            if isinstance(op2, DecafParser.LocationExpContext):
+                
+                #Si el hijo del op contiene ., asumimos que es struct
+                if op2.getChild(0).getText().find('.') > -1:
+                    res2, scope = obj.findSymbolTableEntry(op2.getChild(0).getChild(0).getText(), obj.currentScope)
+
+                    #Determinamos si es ARRAY
+                    if res2.isArray:
+
+                        #ARRAY Y STRUCT
+                        num = int(obj.getNumber(op2))
+                        res2 = self.getVariableCode(res2, scope, fullCall=op2.getChild(0).getText(), obj=obj, isArray=True, isStruct=True, num=num)
+                    else:
+                        #SOLO ES STRUCT
+                        res2 = self.getVariableCode(res2, scope, fullCall=op2.getChild(0).getText(), obj=obj, isStruct=True)
+
+                #Si no, variable normal
+                else:
+                    res2, scope = obj.findSymbolTableEntry(op2.getChild(0).getChild(0).getText(), obj.currentScope)
+
+                    #Determinamos si es ARRAY
+                    if res2.isArray:
+
+                        #ARRAY 
+                        num = int(obj.getNumber(op2))
+                        res2 = self.getVariableCode(res2, scope, isArray=True, num=num)
+                    else:
+                        #VARIABLE NORMAL
+                        res2 = self.getVariableCode(res2, scope, obj=obj)
+      
             else:
-                res2 = self.getVariableCode(res2, scope)
+                #Si el hijo del op contiene ., asumimos que es struct
+                if op2.getText().find('.') > -1:
+                    res2, scope = obj.findSymbolTableEntry(op2.getChild(0).getText(), obj.currentScope)
+
+
+                    #Determinamos si es ARRAY
+                    if res2.isArray:
+
+                        #ARRAY Y STRUCT
+                        num = int(obj.getNumber(op2))
+                        res2 = self.getVariableCode(res2, scope, fullCall=op2.getText(), obj=obj, isArray=True, isStruct=True, num=num)
+                    else:
+                        #SOLO ES STRUCT
+                        res2 = self.getVariableCode(res2, scope, fullCall=op2.getText(), obj=obj, isStruct=True)
+
+                #Variable normal
+                else:
+                    res2, scope = obj.findSymbolTableEntry(op2.getChild(0).getText(), obj.currentScope)
+
+                    #Determinamos si es ARRAY
+                    if res2.isArray:
+                        #ARRAY
+                        num = op2.getChild(2).getText()
+                        res2 = self.getVariableCode(res2, scope, isArray=True, num=num)
+                    else:
+                        #VARIABLE NORMAL
+                        res2 = self.getVariableCode(res2, scope)
 
         elif isinstance(op2, DecafParser.LiteralExpContext):
             res2 = op2.getChild(0).getText()

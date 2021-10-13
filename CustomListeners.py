@@ -56,23 +56,24 @@ class CustomListener(DecafListener):
         offset = var.offset
         structMembers = self.searchStruct(var.varType).structMembers
         changed = True
-        while changed:
-            changed = False
-            for prop in structMembers:
-                if properties[-1] == prop:
-                    break
-                else:
-                    propertyObj = structMembers[prop]
-                    if propertyObj.varType.find('struct') > -1:
-                        changed = True
+        if len(properties) > 0:
+            while changed:
+                changed = False
+                for prop in structMembers:
+                    if properties[-1] == prop:
                         break
-                offset += structMembers[prop].size
-            if changed:
-                changed = False
-                propertyObj = structMembers[prop]
-                structMembers = self.structs[propertyObj.varType].structMembers
-            else:
-                changed = False
+                    else:
+                        propertyObj = structMembers[prop]
+                        if propertyObj.varType.find('struct') > -1:
+                            changed = True
+                            break
+                    offset += structMembers[prop].size
+                if changed:
+                    changed = False
+                    propertyObj = structMembers[prop]
+                    structMembers = self.structs[propertyObj.varType].structMembers
+                else:
+                    changed = False
 
         return offset
 
@@ -87,6 +88,13 @@ class CustomListener(DecafListener):
 
         return canAdd
 
+    def getNumber(self, node):
+        txt = node.getText()
+        init = txt.find('[')
+        end = txt.find(']')
+
+        return txt[init+1:end]
+        
 
     def pushScope(self, scope):
         self.previousScope = self.currentScope
