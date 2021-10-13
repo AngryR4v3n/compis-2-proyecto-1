@@ -49,6 +49,33 @@ class CustomListener(DecafListener):
         except KeyError:
             pass
 
+    def getStructPropertyOffset(self, fullCall, var):            
+        properties = fullCall.split('.')
+        #no necesitamos sumar el offset del padre.
+        properties.pop(0)
+        offset = var.offset
+        structMembers = self.searchStruct(var.varType).structMembers
+        changed = True
+        while changed:
+            changed = False
+            for prop in structMembers:
+                if properties[-1] == prop:
+                    break
+                else:
+                    propertyObj = structMembers[prop]
+                    if propertyObj.varType.find('struct') > -1:
+                        changed = True
+                        break
+                offset += structMembers[prop].size
+            if changed:
+                changed = False
+                propertyObj = structMembers[prop]
+                structMembers = self.structs[propertyObj.varType].structMembers
+            else:
+                changed = False
+
+        return offset
+
     #TABLE MANAGEMENT
     def addScope(self, pastScope, methodType=None):
         canAdd = False
@@ -168,6 +195,7 @@ class CustomListener(DecafListener):
                     num = int(ctx.getChild(3).getText())
                 if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
                     self.addVar(varType, varId, 'structVar', num, isArray)
+                        
         else:
             if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
                 #TODO: Revisar que exista array de structs..
@@ -346,6 +374,7 @@ class CustomListener(DecafListener):
     
     def exitMethodCallExp(self, ctx: DecafParser.MethodCallExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.methodCall()]
+        self.writer.writeLine(f'CALL {name}', self.nest)
 
     def exitReturnSt(self, ctx: DecafParser.ReturnStContext):
         if ctx.getChild(0).getText() == 'return':
@@ -392,10 +421,10 @@ class CustomListener(DecafListener):
         
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ', self.nest+1)
+        self.writer.write(f'{targetTemp.name} = ', self.nest)
 
         x1, x2 = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{x1} + {x2}')
+        self.writer.writeLine(f'{x1} {operator} {x2}')
         
     
     def exitRelOp(self, ctx: DecafParser.RelOpContext):
@@ -586,6 +615,13 @@ class CustomListener(DecafListener):
 
     def exitMethodCallExp(self, ctx: DecafParser.MethodCallExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        
+        self.addTempVar(self.nodeTypes[ctx], 1, False)
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+
         
     def exitAssignSt(self, ctx: DecafParser.AssignStContext):
         op1 = ctx.getChild(0)

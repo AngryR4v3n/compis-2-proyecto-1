@@ -1,12 +1,22 @@
-class Program{
-	void main(void)
-	{
-		int x[3];
-		x[1] = 0;
-		while (true)
-		{
-			int y;
-			y = 0;
-		}
-	}
+class Program
+{
+    struct Y
+    {
+        int z;
+    };
+    struct X
+    {
+        int m;
+        int n;
+        struct Y o;
+    };
+
+    void main(void)
+    {
+		int x;
+        struct X H;
+        H.n = H.o.z + x;
+    }
 }
+      
+
