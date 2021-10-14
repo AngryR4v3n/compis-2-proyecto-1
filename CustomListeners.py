@@ -496,7 +496,7 @@ class CustomListener(DecafListener):
         self.writer.write(f'{targetTemp.name} = ', self.nest)
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} {operation} {x2}')
-    
+
     def exitLiteralExp(self, ctx: DecafParser.LiteralExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
 
@@ -595,6 +595,7 @@ class CustomListener(DecafListener):
     #basic inputs
     def exitParensOp(self, ctx: DecafParser.ParensOpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()] 
+
 
     def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
         self.nodeTypes[ctx] = 'int'

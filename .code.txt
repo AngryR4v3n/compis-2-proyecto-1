@@ -1,51 +1,27 @@
-function Minimo: 
-	vArr[44] = G[0]
-	vArr[48] = vArr[40]
-	WHILE_1
-	t0 = vArr[40] < 10
-	IF t0 > 0 GOTO IF_TRUE1
-	GOTO END_WHILE1
-	IF_TRUE_1
-		t1 = G[0] < vArr[44]
-		IF_2 t1 > 0 GOTO IF_TRUE2
-		GOTO IF_FALSE2
-		t2 = G[0] < vArr[44]
-		IF_TRUE_2
-			t3 = vArr[44] < vArr[48]
-			vArr[52] = t3
-			vArr[44] = G[0]
-			vArr[48] = vArr[40]
-		EXIT IF_2
-		t4 = vArr[40] + 1
-		vArr[40] = t4
-	GOTO WHILE_1
-	END WHILE_1
-	RETURN vArr[48]
-END Minimo
-
-
-function Ordenar: 
-	vArr[61] = 1
-	WHILE_1
-	t5 = vArr[61] < 10
-	IF t5 > 0 GOTO IF_TRUE1
-	GOTO END_WHILE1
-	IF_TRUE_1
-		PARAM 5
-		CALL Minimo, 1
-		vArr[74] = t6
-		vArr[69] = G[0]
-		G[0] = G[0]
-		G[0] = vArr[69]
-		t7 = vArr[61] + 1
-		vArr[61] = t7
-	GOTO WHILE_1
-	END WHILE_1
-END Ordenar
-
-
 function OutputInt: 
 END OutputInt
+
+
+function Test: 
+	t0 = vArr[4] / vArr[8]
+	t1 = t0 * vArr[12]
+	t2 = t1 - vArr[16]
+	t3 = t2 + vArr[20]
+	t4 = t3 + vArr[24]
+	t5 = t4 + vArr[28]
+	t6 = t5 + vArr[32]
+	t7 = t6 + vArr[36]
+	t8 = t7 + vArr[40]
+	t9 = t8 + vArr[44]
+	t10 = t9 + vArr[48]
+	t11 = t10 + vArr[52]
+	t12 = t11 + vArr[56]
+	t13 = t12 + vArr[60]
+	t14 = t13 + vArr[64]
+	vArr[68] = t14
+	PARAM resultado
+	CALL OutputInt, 1
+END Test
 
 
 function InputInt: 
@@ -54,31 +30,24 @@ END InputInt
 
 
 function main: 
-	vArr[90] = 0
-	WHILE_1
-	t8 = vArr[90] < 10
-	IF t8 > 0 GOTO IF_TRUE1
-	GOTO END_WHILE1
-	IF_TRUE_1
-		CALL InputInt, 0
-		G[0] = t9
-		t10 = vArr[90] + 1
-		vArr[90] = t10
-	GOTO WHILE_1
-	END WHILE_1
-	CALL Ordenar, 0
-	vArr[90] = 0
-	WHILE_1
-	t11 = vArr[90] < 10
-	IF t11 > 0 GOTO IF_TRUE1
-	GOTO END_WHILE1
-	IF_TRUE_1
-		PARAM A[i]
-		CALL OutputInt, 1
-		t12 = vArr[90] + 1
-		vArr[90] = t12
-	GOTO WHILE_1
-	END WHILE_1
+	vArr[140] = 0
+	PARAM 4
+	PARAM 2
+	PARAM 6
+	PARAM 7
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	PARAM 1
+	CALL Test, 16
 END main
 
 

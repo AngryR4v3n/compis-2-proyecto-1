@@ -1,70 +1,40 @@
+ 
 class Program
 {
 
-int A[10];
-
-int Minimo(int i)
-{
-	int Min;
-	int index;
-	Min = A[i];
-	index = i;
-	while(i<10)
-	{
-		if (A[i]<Min)
-		{
-			Min = A[i];
-			index = i;
-		}
-		i = i + 1;
-	}
-	return index;
-}
-
-
-void Ordenar(void)
-{
-	int i;
-	int j;
-	int temp;
-	i = 0;
-	while(i<10)
-	{
-		int Index;
-		Index = Minimo(i);
-		temp = A[Index];
-		A[Index] = A[i];
-		A[i]=temp;
-		i = i+1;
-	}
-}
 
 void OutputInt(int n)
 {
+
+}
+void Test(int a, int b, int c, int d,int e,int f,int g,int h,int i,int j,int k,int l,int m,int n,int o,int p)
+{
+	int resultado;
+	resultado = (a/b)*c-d+e+f+g+h+i+j+k+l+m+n+o+p;
+	OutputInt(resultado);
 }
 
+
+
 int InputInt(void)
-{return 0;}
+{
+
+	return 0;
+}
 
 void main(void)
 {
-
+	int n;
+	int f;
+	
 	int i;
 	i = 0;
-	while(i<10)
-	{
-		A[i]=InputInt();
-		i = i+1;		
-	}
-	Ordenar();
-	i = 0;
-	while(i<10)
-	{
-		OutputInt(A[i]);
-		i = i+1;
-	}
+	
+	Test(4,2,6,7,1,1,1,1,1,1,1,1,1,1,1,1);
 
 }
 
 
+
 }
+
