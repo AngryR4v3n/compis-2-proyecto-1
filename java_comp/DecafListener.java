@@ -27,29 +27,15 @@ public interface DecafListener extends ParseTreeListener {
 	 */
 	void exitDeclaration(DecafParser.DeclarationContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code normalVar}
-	 * labeled alternative in {@link DecafParser#varDeclaration}.
+	 * Enter a parse tree produced by {@link DecafParser#varDeclaration}.
 	 * @param ctx the parse tree
 	 */
-	void enterNormalVar(DecafParser.NormalVarContext ctx);
+	void enterVarDeclaration(DecafParser.VarDeclarationContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code normalVar}
-	 * labeled alternative in {@link DecafParser#varDeclaration}.
+	 * Exit a parse tree produced by {@link DecafParser#varDeclaration}.
 	 * @param ctx the parse tree
 	 */
-	void exitNormalVar(DecafParser.NormalVarContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code arrVar}
-	 * labeled alternative in {@link DecafParser#varDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterArrVar(DecafParser.ArrVarContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code arrVar}
-	 * labeled alternative in {@link DecafParser#varDeclaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitArrVar(DecafParser.ArrVarContext ctx);
+	void exitVarDeclaration(DecafParser.VarDeclarationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DecafParser#structDeclaration}.
 	 * @param ctx the parse tree
@@ -61,77 +47,15 @@ public interface DecafListener extends ParseTreeListener {
 	 */
 	void exitStructDeclaration(DecafParser.StructDeclarationContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code intType}
-	 * labeled alternative in {@link DecafParser#varType}.
+	 * Enter a parse tree produced by {@link DecafParser#varType}.
 	 * @param ctx the parse tree
 	 */
-	void enterIntType(DecafParser.IntTypeContext ctx);
+	void enterVarType(DecafParser.VarTypeContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code intType}
-	 * labeled alternative in {@link DecafParser#varType}.
+	 * Exit a parse tree produced by {@link DecafParser#varType}.
 	 * @param ctx the parse tree
 	 */
-	void exitIntType(DecafParser.IntTypeContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code charType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void enterCharType(DecafParser.CharTypeContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code charType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void exitCharType(DecafParser.CharTypeContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code boolType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void enterBoolType(DecafParser.BoolTypeContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code boolType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void exitBoolType(DecafParser.BoolTypeContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code structType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void enterStructType(DecafParser.StructTypeContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code structType}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void exitStructType(DecafParser.StructTypeContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code structDec}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void enterStructDec(DecafParser.StructDecContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code structDec}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void exitStructDec(DecafParser.StructDecContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code void}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void enterVoid(DecafParser.VoidContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code void}
-	 * labeled alternative in {@link DecafParser#varType}.
-	 * @param ctx the parse tree
-	 */
-	void exitVoid(DecafParser.VoidContext ctx);
+	void exitVarType(DecafParser.VarTypeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link DecafParser#methodDeclaration}.
 	 * @param ctx the parse tree

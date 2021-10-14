@@ -121,9 +121,14 @@ class Intermediator:
 
         elif isinstance(op1, DecafParser.LiteralContext):
             res1 = op1.getChild(0).getText()
-        #si es method call
-        elif isinstance(op1, DecafParser.MethodCallExpContext):
-            targetName = obj.nodeTempVars[op1.getChild(0)]
+        #si es method call o resultado de una operacion directa
+        elif isinstance(op1, DecafParser.MethodCallExpContext) or isinstance(op1, DecafParser.OtherIntOpContext) or isinstance(op1, DecafParser.SumOpContext) or isinstance(op1, DecafParser.RelOpContext) or isinstance(op1, DecafParser.EqOpContext) or isinstance(op1, DecafParser.CondOpContext):
+            if isinstance(op1, DecafParser.MethodCallExpContext):
+                targetName = obj.nodeTempVars[op1.getChild(0)]
+            
+            elif isinstance(op1, DecafParser.OtherIntOpContext) or isinstance(op1, DecafParser.SumOpContext) or isinstance(op1, DecafParser.RelOpContext) or isinstance(op1, DecafParser.EqOpContext) or isinstance(op1, DecafParser.CondOpContext):
+                targetName = obj.nodeTempVars[op1]
+
             targetTemp, scope = obj.findSymbolTableEntry(targetName, obj.currentScope)
             res1 = self.getVariableCode(targetTemp, scope)
 
@@ -195,8 +200,13 @@ class Intermediator:
         elif isinstance(op2, DecafParser.LiteralContext):
             res2 = op2.getChild(0).getText()
 
-        elif isinstance(op2, DecafParser.MethodCallExpContext) or isinstance(op2, DecafParser.OtherIntOpContext) or isinstance(op2, DecafParser.SumOpContext):
-            targetName = obj.nodeTempVars[op2]
+        elif isinstance(op2, DecafParser.MethodCallExpContext) or isinstance(op2, DecafParser.OtherIntOpContext) or isinstance(op2, DecafParser.SumOpContext) or isinstance(op2, DecafParser.RelOpContext) or isinstance(op2, DecafParser.EqOpContext) or isinstance(op2, DecafParser.CondOpContext):
+            if isinstance(op2, DecafParser.MethodCallExpContext):
+                targetName = obj.nodeTempVars[op2]
+            
+            elif isinstance(op2, DecafParser.SumOpContext) or isinstance(op2, DecafParser.OtherIntOpContext) or isinstance(op2, DecafParser.RelOpContext) or isinstance(op2, DecafParser.EqOpContext) or isinstance(op2, DecafParser.CondOpContext):
+                targetName = obj.nodeTempVars[op2]
+            
             targetTemp, scope = obj.findSymbolTableEntry(targetName, obj.currentScope)
             res2 = self.getVariableCode(targetTemp, scope)
 

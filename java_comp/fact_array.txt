@@ -11,15 +11,23 @@ class Program
         struct Y o;
     };
 
+    boolean numero(boolean a, boolean b){
+        return a && b;
+    }
+
     void main(void)
     {
-        struct X H[4];
+        struct X H[1];
         int x[3];
-        int y;
-        H[1].m = x[0] + y;
+        boolean y;
+        H[1].m = x[0] + 1;
+
+        y = numero(true,true);
     }
 }
       
+
+
 
 
 

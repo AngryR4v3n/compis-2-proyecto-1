@@ -375,7 +375,12 @@ class CustomListener(DecafListener):
                 self.add_errors('Method call error', 'param missmatch, check method call', ctx.start.line)
 
         #INTERMEDIATE
-        self.writer.writeLine(f'CALL {name}', self.nest)
+
+        #params
+        for elem in ctx.expression():
+            param = elem.getText()
+            self.writer.writeLine(f'PARAM {param}', self.nest)
+        self.writer.writeLine(f'CALL {name}, {len(ctx.expression())}', self.nest)
 
         
         
@@ -455,7 +460,7 @@ class CustomListener(DecafListener):
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
 
-         #creamos el lado izquierdo del three address code..
+        #creamos el lado izquierdo del three address code..
         self.addTempVar('int', 1, False)
         #obtenemos la variable recien creada
         targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
@@ -465,7 +470,6 @@ class CustomListener(DecafListener):
         self.writer.write(f'{targetTemp.name} = ', self.nest+1)
         x1, x2 = self.writer.getOperators(self, op1, op2)
         self.writer.writeLine(f'{x1} {operation} {x2}')
-        print('')
     
     def exitLiteralExp(self, ctx: DecafParser.LiteralExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
@@ -473,6 +477,7 @@ class CustomListener(DecafListener):
     def exitEqOp(self, ctx: DecafParser.EqOpContext):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
+        operation = ctx.getChild(1).getText()
         typeOp = self.nodeTypes[op1]
         typeOp2 = self.nodeTypes[op2]
 
@@ -483,26 +488,63 @@ class CustomListener(DecafListener):
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'comparison operator expected integer entities', ctx.start.line)
 
+        #INTERMEDIATE
+        #creamos el lado izquierdo del three address code..
+        self.addTempVar('boolean', 1, False)
+        #obtenemos la variable recien creada
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
 
-    def exitRel_op(self, ctx: DecafParser.Rel_opContext):
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+        self.writer.write(f'{targetTemp.name} = ', self.nest+1)
+        x1, x2 = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{x1} {operation} {x2}')
+
+
+    def exitRelOp(self, ctx: DecafParser.RelOpContext):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
-
+        operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'int'
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
 
-    def exitCond_op(self, ctx: DecafParser.Cond_opContext):
+        #INTERMEDIATE
+        #creamos el lado izquierdo del three address code..
+        self.addTempVar('int', 1, False)
+        #obtenemos la variable recien creada
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+        self.writer.write(f'{targetTemp.name} = ', self.nest+1)
+        x1, x2 = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{x1} {operation} {x2}')
+
+
+    def exitCondOp(self, ctx: DecafParser.CondOpContext):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
-
+        operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             self.nodeTypes[ctx] = 'boolean'
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'logical operator expected boolean entities', ctx.start.line)
+
+        #INTERMEDIATE
+        #creamos el lado izquierdo del three address code..
+        self.addTempVar('boolean', 1, False)
+        #obtenemos la variable recien creada
+        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+        self.nodeTempVars[ctx] = targetTemp.name
+        self.writer.write(f'{targetTemp.name} = ', self.nest)
+        x1, x2 = self.writer.getOperators(self, op1, op2)
+        self.writer.writeLine(f'{x1} {operation} {x2}')
 
     def exitMinusOp(self, ctx: DecafParser.MinusOpContext):
         op1 = ctx.getChild(1)

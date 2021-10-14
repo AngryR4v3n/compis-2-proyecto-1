@@ -87,7 +87,7 @@ methodCall:
 	| ID '('expression (','expression)+ ')'; 
 
 expression:
- 	methodCall #methodCallExp
+ 	methodCall ';' #methodCallExp
 	| location #locationExp
 	| literal #literalExp
 	| expression ('*' | '/' | '%') expression #otherIntOp
