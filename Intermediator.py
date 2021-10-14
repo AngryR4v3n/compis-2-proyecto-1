@@ -101,7 +101,7 @@ class Intermediator:
                     #Determinamos si es ARRAY
                     if res1.isArray:
                         #ARRAY
-                        num = op1.getChild(2).getText()
+                        num = obj.getNumber(op1.getChild(2))
                         res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
                     else:
                         #VARIABLE NORMAL
@@ -219,22 +219,23 @@ class Intermediator:
 
             if len(blockNumber) > 1 and idx == len(parentCtx.children) - 1:
                 #ELSE
-                self.writeLine(f'IF_FALSE_{obj.nest-1}', obj.nest-1)
+                self.writeLine(f'IF_FALSE_{obj.nest}', obj.nest)
             else:
                 #TRUE
-                self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
+                self.writeLine(f'IF_TRUE_{obj.nest}', obj.nest)
         
         elif isinstance(parentCtx, DecafParser.WhileContext):
-            self.writeLine(f'IF_TRUE_{obj.nest-1}', obj.nest-1)
+            self.writeLine(f'IF_TRUE_{obj.nest}', obj.nest)
 
     def getTails(self, obj, parentCtx, ctx):
 
         if isinstance(ctx, DecafParser.WhileContext):
-            self.writeLine(f'GOTO WHILE_{obj.nest-1}', obj.nest+1)
-            self.writeLine(f'END WHILE_{obj.nest-1}', obj.nest)
+            self.writeLine(f'GOTO WHILE_{obj.nest}', obj.nest)
+            self.writeLine(f'END WHILE_{obj.nest}', obj.nest)
 
         elif isinstance(ctx, DecafParser.MethodDeclarationContext):
             self.writeLine(f'END {ctx.getChild(1).getText()}')
+            self.writeLine('\n')
 
 
         
