@@ -8,6 +8,7 @@ class CustomListener(DecafListener):
 
         #sizes management
         self.primitives = ['int', 'char', 'boolean', 'struct', 'void']
+        self.defaults = {'int': 0, 'char': 'a', 'boolean': 'false' }
         self.sizes = {'int': 4, 'char': 1, 'boolean': 1}
         self.offset = 0
 
@@ -53,6 +54,7 @@ class CustomListener(DecafListener):
         properties = fullCall.split('.')
         #no necesitamos sumar el offset del padre.
         properties.pop(0)
+
         offset = var.offset
         structMembers = self.searchStruct(var.varType).structMembers
         changed = True
@@ -60,16 +62,28 @@ class CustomListener(DecafListener):
             while changed:
                 changed = False
                 for prop in structMembers:
-                    if properties[-1] == prop:
+                    idx = properties[-1].find('[')
+                    if idx > -1:
+                        rawName = properties[-1][:idx]
+                    else:
+                        rawName = properties[-1]
+                    if rawName == prop:
+                        #buscamos numero
+                        if properties[-1].find('[') > -1:
+                            number = int(self.getNumber(properties[-1], plain=True))
+                        else:
+                            number = 1
+                        size = structMembers[prop].size * number
                         break
+                        
                     else:
                         propertyObj = structMembers[prop]
                         if propertyObj.varType.find('struct') > -1:
                             changed = True
                             break
-                    offset += structMembers[prop].size
+                        size = structMembers[prop].size
+                    offset += size
                 if changed:
-                    changed = False
                     propertyObj = structMembers[prop]
                     structMembers = self.structs[propertyObj.varType].structMembers
                 else:
@@ -88,12 +102,25 @@ class CustomListener(DecafListener):
 
         return canAdd
 
-    def getNumber(self, node):
-        txt = node.getText()
+    def getNumber(self, node, plain=False):
+        if plain:
+            txt = node
+        else:
+            txt = node.getText()
         init = txt.find('[')
         end = txt.find(']')
 
-        return txt[init+1:end]
+        #revisamos que sea un numero
+        try:
+            a = int(txt[init+1:end])
+            return txt[init+1:end]
+        except:
+
+            #si truena: puede ser una variable, o un metodo.
+            var, scope = self.findSymbolTableEntry(txt[init+1:end], self.currentScope)
+            return var.value
+
+        
         
 
     def pushScope(self, scope):
@@ -111,7 +138,7 @@ class CustomListener(DecafListener):
         return isGlobal
 
 
-    def addVar(self, varType, name, decafType, num, isArray):
+    def addVar(self, varType, name, decafType, num, isArray, value=None, calculateOffset=True):
         if (num == None): 
             num = 1
         
@@ -122,8 +149,9 @@ class CustomListener(DecafListener):
         tempSymbolTable = self.scopes[self.currentScope].symbolTable
 
         if name not in tempSymbolTable:
-            tempSymbolTable[name] = TableItem(varType, name, num, decafType, currentVarSize, isArray, self.offset)
-            self.offset += currentVarSize
+            tempSymbolTable[name] = TableItem(varType, name, num, decafType, currentVarSize, isArray, self.offset, value=value)
+            if calculateOffset:
+                self.offset += currentVarSize
             canAdd = True
         else:
             canAdd = False
@@ -132,7 +160,7 @@ class CustomListener(DecafListener):
         return canAdd
 
     def addTempVar(self, varType, num, isArray):
-        self.addVar(varType, f't{self.tempCount}', 'tempVar', num, isArray)
+        self.addVar(varType, f't{self.tempCount}', 'tempVar', num, isArray, value=self.defaults[varType])
         self.tempCount += 1
         
 
@@ -200,9 +228,9 @@ class CustomListener(DecafListener):
                 else:
                     isArray = True
                     #TODO: Mejorar obtener el numero del array...
-                    num = int(ctx.getChild(3).getText())
+                    num = self.getNumber(ctx.getChild(3))
                 if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
-                    self.addVar(varType, varId, 'structVar', num, isArray)
+                    self.addVar(varType, varId, 'structVar', num, isArray, calculateOffset=False)
                         
         else:
             if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
@@ -216,7 +244,7 @@ class CustomListener(DecafListener):
                     #TODO: Mejorar obtener el numero del array...
                     num = int(ctx.getChild(3).getText())
                 
-                added = self.addVar(varType, varId, "var", num, isArray)
+                added = self.addVar(varType, varId, "var", num, isArray, value=self.defaults[varType])
 
                 if added:
                     self.nodeTypes[ctx] = 'void'
@@ -256,8 +284,10 @@ class CustomListener(DecafListener):
 
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
-
-            added = self.addVar(paramType, paramId, "param", None, isArray)
+            if paramType in self.primitives:
+                added = self.addVar(paramType, paramId, "param", None, isArray, value=self.defaults[paramType])
+            else:
+                added = self.addVar(paramType, paramId, "param", None, isArray, value=self.defaults[paramType])
             if (added):
                 self.nodeTypes[ctx] = paramType
             else:

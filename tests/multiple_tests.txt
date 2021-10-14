@@ -23,6 +23,7 @@ struct A z;
 
 void OutputInt(int n)
 {
+
 }
 
 int InputInt(void)
@@ -32,9 +33,13 @@ int InputInt(void)
 int factorial(int n)
 {
 	if (n==0)
-	{return 1;}
+	{
+		return 1;
+	}
 	else
-	{return n*factorial(n-1);}
+	{
+		return n*factorial(n-1);
+	}
 }
 
 
@@ -44,11 +49,11 @@ int ReturnNumber(void)
 void main(void)
 {
 	struct C y[3];
-	y[1].b = 'a';
-
-	
-
+	y[1].b = 3;
 
 }
+
+}
+
 
 

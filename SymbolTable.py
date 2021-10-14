@@ -13,10 +13,10 @@ class TableItem():
     scope: Ambito de la variable
     isArray: Si es un array o no, True, false.
     """
-    def __init__(self, varType, name, num, decafType, size, isArray, offset):
+    def __init__(self, varType, name, num, decafType, size, isArray, offset, value=None):
         self.varType = varType
         self.name = name 
-        self.value = None
+        self.value = value
         self.num = num
         self.decafType = decafType
         self.size = size

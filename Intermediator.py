@@ -35,17 +35,11 @@ class Intermediator:
         elif isArray and not isStruct:
             return f'{prefix}[{var.offset + int(num) * self.sizes[var.varType]}]'
 
-        elif isStruct and not isArray:
-
-            offset = obj.getStructPropertyOffset(fullCall, var)
-
-            return f'{prefix}[{offset}]'
-
-        elif isArray and isStruct:
-            #donde inicia la variable
+        elif isStruct:
+            #ya cuenta donde inicia la variable raiz.
             offset = obj.getStructPropertyOffset(fullCall, var)
             structSize = obj.searchStruct(var.varType).size
-            return f'{prefix}[{structSize * int(num) + var.offset + offset}]'
+            return f'{prefix}[{structSize * int(num) + offset}]'
 
 
     def getOperators(self, obj, op1, op2):
@@ -60,10 +54,9 @@ class Intermediator:
                 #Si el hijo del op tiene mas de 1 hijo, es un struct.
                 if op1.getChild(0).getText().find('.') > -1:
                     res1, scope = obj.findSymbolTableEntry(op1.getChild(0).getChild(0).getText(), obj.currentScope)
-
+             
                     #Determinamos si es ARRAY
                     if res1.isArray:
-
                         #ARRAY Y STRUCT
                         num = int(obj.getNumber(op1))
                         res1 = self.getVariableCode(res1, scope, fullCall=op1.getChild(0).getText(), obj=obj, isArray=True, isStruct=True, num=num)

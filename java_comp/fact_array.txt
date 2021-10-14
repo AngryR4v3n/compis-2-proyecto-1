@@ -2,8 +2,9 @@ class Program
 {
     struct Y
     {
-        int z;
+        int z[7];
     };
+    
     struct X
     {
         int m;
@@ -11,24 +12,11 @@ class Program
         struct Y o;
     };
 
-    boolean numero(boolean a, boolean b){
-        return a && b;
-    }
-
     void main(void)
     {
-        struct X H[1];
-        int x[3];
-        boolean y;
-        H[1].m = x[0] + 1;
-
-        y = numero(true,true);
+	int x;
+	int j;
+        struct X H;
+        H.n = H.o.z[j] + x;
     }
 }
-      
-
-
-
-
-
-
