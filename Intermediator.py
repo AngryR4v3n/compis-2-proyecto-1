@@ -20,6 +20,13 @@ class Intermediator:
 
     def getVariableCode(self, var, scope, obj=None, fullCall=None, isStruct=False, isArray=False, num=0):
         prefix = ''
+        try:
+            num = int(num)
+        except:
+            # asumimos que es una variable
+            num, scope = obj.findSymbolTableEntry(num, obj.currentScope)
+            num = num.value
+
         if scope == 'global':
             prefix = 'G'
         else:
@@ -33,6 +40,7 @@ class Intermediator:
         
         #esto no funcionara con arrays de structs
         elif isArray and not isStruct:
+                
             return f'{prefix}[{var.offset + int(num) * self.sizes[var.varType]}]'
 
         elif isStruct:

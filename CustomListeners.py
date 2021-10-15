@@ -116,14 +116,35 @@ class CustomListener(DecafListener):
                 a = int(txt[init+1:end])
                 return txt[init+1:end]
             else:
+                a = int(txt)
                 return txt
         except:
 
             #si truena: puede ser una variable, o un metodo.
+            
+            loop = False
             if init != -1 and end != -1:
-                var, scope = self.findSymbolTableEntry(txt[init+1:end], self.currentScope)
+                search = txt[init+1:end]
+                var, scope = self.findSymbolTableEntry(search, self.currentScope)
             else:
-                var, scope = self.findSymbolTableEntry(txt, self.currentScope)
+                search = txt
+                var, scope = self.findSymbolTableEntry(search, self.currentScope)
+
+            try:
+                a = int(var.value)
+            except:
+                #asumimos que es una temp o una variable
+                loop = True
+
+            while loop:
+                var, scope = self.findSymbolTableEntry(var.value, self.currentScope)
+                try:
+                    a = int(var.value)
+                    loop = False
+                except:
+                    pass
+            
+
             return var.value
 
         
@@ -662,11 +683,12 @@ class CustomListener(DecafListener):
                 currentTable = self.structStack.pop()
 
                 if currentTable:
-                    var = currentTable.structMembers[ctx.getChild(0).getText()]
+                    var = currentTable.structMembers.get(ctx.getChild(0).getText())
                     if var:  
                         self.nodeTypes[ctx] = var.varType
                     else:
                         self.nodeTypes[ctx] = '-1'
+                        self.add_errors('Struct definition error', "Property not found on struct.", ctx.start.line)   
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Struct definition error', "Property not found on struct.", ctx.start.line)   
@@ -737,7 +759,7 @@ class CustomListener(DecafListener):
 
             if op1.getChildCount() <= 1:
             #hay que buscar la variable y actualizarle el valor.
-                varObj, scope = self.findSymbolTableEntry(op1.getText(), self.currentScope)
+                varObj, scope = self.findSymbolTableEntry(op1.getText(), self.currentScope)                
                 varObj.value = val
 
             self.writer.writeLine(f'{assign} = {val}', self.nest)
@@ -841,7 +863,6 @@ class CustomListener(DecafListener):
         else:
 
             if scope == 'global' and not search:
-                self.add_errors('Entity not found', 'var has not been declared', None)
                 return 
             elif not search and scope != 'global': 
                 otherScope = self.scopes.get(scope).parent
@@ -851,8 +872,12 @@ class CustomListener(DecafListener):
 
             #busca recursivamente hacia arriba
             if otherScope:
-                search, scope = self.findSymbolTableEntry(name,otherScope)
-                return search, scope
+                try:
+                    search, scope = self.findSymbolTableEntry(name,otherScope)
+                    return search, scope
+
+                except:
+                    return None, None
 
         return search, scope
 

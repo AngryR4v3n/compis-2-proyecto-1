@@ -1,0 +1,34 @@
+	class Program
+	{
+	
+		struct B {
+			int b;
+		};
+		struct A {
+			int a;
+			struct B x[3];	
+		};
+
+		
+	
+		void main(void)
+		{
+			struct A y[3];
+			y[0].x[0].b = 3;
+		}
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -12,7 +12,7 @@ struct B
 	struct A c;
 };
 
-struct C
+struct C 
 {
 	int b;
 	struct A c;
@@ -32,12 +32,12 @@ int InputInt(void)
 
 int factorial(int n)
 {
-	if (n==0)
+	if (n==0) 
 	{
 		return 1;
 	}
 	else
-	{
+	{				
 		return n*factorial(n-1);
 	}
 }
@@ -47,13 +47,14 @@ int ReturnNumber(void)
 {return z.a;}
 
 void main(void)
-{
+{	
 	struct C y[3];
 	y[1].b = 3;
 
 }
 
 }
+
 
 
 

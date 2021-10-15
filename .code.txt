@@ -1,0 +1,5 @@
+function main: 
+	vArr[4] = 3
+END main
+
+

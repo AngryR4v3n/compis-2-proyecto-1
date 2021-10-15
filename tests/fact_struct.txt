@@ -27,7 +27,7 @@ int factorial(int n)
 
 void main(void)
 {
-	struct B y; //21
+	struct B y;
 	y.b = 5;
 	y.c.a = factorial(y.b);
 }
