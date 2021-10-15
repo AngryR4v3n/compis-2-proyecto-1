@@ -1,15 +1,16 @@
 class Program
 {
+
 struct MyTest
 {
-	int n;
-	char b;
+	int n; 
+	char b; 
 	int c[10];
 };
 
-struct OtherTest
+struct OtherTest 
 {
-	struct MyTest T[10];
+	struct MyTest T[1];
 	int n;
 };
 
@@ -24,3 +25,4 @@ void main(void)
 }
 
 }
+

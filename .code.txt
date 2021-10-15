@@ -2,52 +2,16 @@ function OutputInt:
 END OutputInt
 
 
-function Test: 
-	t0 = vArr[4] / vArr[8]
-	t1 = t0 * vArr[12]
-	t2 = t1 - vArr[16]
-	t3 = t2 + vArr[20]
-	t4 = t3 + vArr[24]
-	t5 = t4 + vArr[28]
-	t6 = t5 + vArr[32]
-	t7 = t6 + vArr[36]
-	t8 = t7 + vArr[40]
-	t9 = t8 + vArr[44]
-	t10 = t9 + vArr[48]
-	t11 = t10 + vArr[52]
-	t12 = t11 + vArr[56]
-	t13 = t12 + vArr[60]
-	t14 = t13 + vArr[64]
-	vArr[68] = t14
-	PARAM resultado
-	CALL OutputInt, 1
-END Test
-
-
-function InputInt: 
-	RETURN 0
-END InputInt
-
-
 function main: 
-	vArr[140] = 0
-	PARAM 4
-	PARAM 2
-	PARAM 6
-	PARAM 7
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	PARAM 1
-	CALL Test, 16
+	t0 = vArr[4] && vArr[5]
+	IF_1 t0 > 0 GOTO IF_TRUE1
+	GOTO IF_FALSE1
+	IF_TRUE_1
+		PARAM vArr[6]
+		CALL OutputInt, 1
+	EXIT IF_1
+	PARAM 3
+	CALL OutputInt, 1
 END main
 
 

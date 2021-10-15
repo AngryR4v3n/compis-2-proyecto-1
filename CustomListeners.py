@@ -112,8 +112,11 @@ class CustomListener(DecafListener):
 
         #revisamos que sea un numero
         try:
-            a = int(txt[init+1:end])
-            return txt[init+1:end]
+            if len(txt) > 1:
+                a = int(txt[init+1:end])
+                return txt[init+1:end]
+            else:
+                return txt
         except:
 
             #si truena: puede ser una variable, o un metodo.
@@ -141,7 +144,7 @@ class CustomListener(DecafListener):
         return isGlobal
 
 
-    def addVar(self, varType, name, decafType, num, isArray, value=None, calculateOffset=True):
+    def addVar(self, varType, name, decafType, num, isArray, value=None):
         if (num == None): 
             num = 1
         
@@ -153,8 +156,7 @@ class CustomListener(DecafListener):
 
         if name not in tempSymbolTable:
             tempSymbolTable[name] = TableItem(varType, name, num, decafType, currentVarSize, isArray, self.offset, value=value)
-            if calculateOffset:
-                self.offset += currentVarSize
+            self.offset += currentVarSize
             canAdd = True
         else:
             canAdd = False
@@ -233,7 +235,7 @@ class CustomListener(DecafListener):
                     #TODO: Mejorar obtener el numero del array...
                     num = self.getNumber(ctx.getChild(3))
                 if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
-                    self.addVar(varType, varId, 'structVar', num, isArray, calculateOffset=False)
+                    self.addVar(varType, varId, 'structVar', num, isArray)
                         
         else:
             if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
@@ -307,7 +309,6 @@ class CustomListener(DecafListener):
         for dec in ctx.varDeclaration():
             varType = dec.getChild(0).getText()
             varId = dec.getChild(1).getText()
-            value = ''
 
             isArray = dec.NUM()
             if not isArray:
@@ -405,18 +406,26 @@ class CustomListener(DecafListener):
             if methodSig:
                 self.nodeTypes[ctx] = methodRef.returnType
 
+                #INTERMEDIATE
+
+                #params
+                for elem in ctx.expression():
+                    param = elem.getText()
+                    res1, res2 = self.writer.getOperators(self, elem, None)
+                    self.writer.writeLine(f'PARAM {res1}', self.nest)
+                
+                self.writer.writeLine(f'CALL {name}, {len(ctx.expression())}', self.nest)
+
+
             else:
                 self.nodeTypes[ctx] = '-1'
                 self.add_errors('Method call error', 'param missmatch, check method call', ctx.start.line)
+                return
 
-        #INTERMEDIATE
+        else:
+            self.add_errors('Method call error', f'method {name} doesnt exist', ctx.start.line)
 
-        #params
-        for elem in ctx.expression():
-            param = elem.getText()
-            self.writer.writeLine(f'PARAM {param}', self.nest)
-        self.writer.writeLine(f'CALL {name}, {len(ctx.expression())}', self.nest)
-
+        
         
         
     
@@ -435,6 +444,7 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Return type error', f'check method definition', ctx.start.line)
+                    return
 
             else:
                 exprType = self.nodeTypes[varRet.getChild(0)]
@@ -445,6 +455,7 @@ class CustomListener(DecafListener):
                 else:
                     self.nodeTypes[ctx] = '-1'
                     self.add_errors('Return type error', f'check method return type and returning entity', ctx.start.line)
+                    return
 
         #INTERMEDIATE
         op1, op2 = self.writer.getOperators(self, ctx.getChild(1), None)
@@ -457,22 +468,23 @@ class CustomListener(DecafListener):
         operator = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'int'
+            #creamos el lado izquierdo del three address code..
+            self.addTempVar('int', 1, False)
+            #obtenemos la variable recien creada
+            targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+            #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+            self.nodeTempVars[ctx] = targetTemp.name
+            self.writer.write(f'{targetTemp.name} = ', self.nest)
+
+            x1, x2 = self.writer.getOperators(self, op1, op2)
+            self.writer.writeLine(f'{x1} {operator} {x2}')
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
 
                 
-        #creamos el lado izquierdo del three address code..
-        self.addTempVar('int', 1, False)
-        #obtenemos la variable recien creada
-        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
         
-        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
-        self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ', self.nest)
-
-        x1, x2 = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{x1} {operator} {x2}')
         
     
    
@@ -482,21 +494,23 @@ class CustomListener(DecafListener):
         operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'int'
+
+             #creamos el lado izquierdo del three address code..
+            self.addTempVar('int', 1, False)
+            #obtenemos la variable recien creada
+            targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+            #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+            self.nodeTempVars[ctx] = targetTemp.name
+            self.writer.write(f'{targetTemp.name} = ', self.nest)
+            x1, x2 = self.writer.getOperators(self, op1, op2)
+            self.writer.writeLine(f'{x1} {operation} {x2}')
+
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
 
-        #creamos el lado izquierdo del three address code..
-        self.addTempVar('int', 1, False)
-        #obtenemos la variable recien creada
-        targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
-
-        #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
-        self.nodeTempVars[ctx] = targetTemp.name
-        self.writer.write(f'{targetTemp.name} = ', self.nest)
-        x1, x2 = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{x1} {operation} {x2}')
-
+       
     def exitLiteralExp(self, ctx: DecafParser.LiteralExpContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
 
@@ -510,22 +524,24 @@ class CustomListener(DecafListener):
         if typeOp == typeOp2:
             self.nodeTypes[ctx] = 'boolean'
 
+            #INTERMEDIATE
+            #creamos el lado izquierdo del three address code.. 
+            if not isinstance(ctx.parentCtx, DecafParser.WhileContext) and not isinstance(ctx.parentCtx, DecafParser.IfContext):
+                self.addTempVar('boolean', 1, False)
+                #obtenemos la variable recien creada
+                targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+                #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+                self.nodeTempVars[ctx] = targetTemp.name
+                self.writer.write(f'{targetTemp.name} = ', self.nest)
+                x1, x2 = self.writer.getOperators(self, op1, op2)
+                self.writer.writeLine(f'{x1} {operation} {x2}')
+
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'comparison operator expected integer entities', ctx.start.line)
 
-        #INTERMEDIATE
-        #creamos el lado izquierdo del three address code.. 
-        if not isinstance(ctx.parentCtx, DecafParser.WhileContext) or isinstance(ctx.parentCtx, DecafParser.IfContext):
-            self.addTempVar('boolean', 1, False)
-            #obtenemos la variable recien creada
-            targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
-
-            #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
-            self.nodeTempVars[ctx] = targetTemp.name
-            self.writer.write(f'{targetTemp.name} = ', self.nest)
-            x1, x2 = self.writer.getOperators(self, op1, op2)
-            self.writer.writeLine(f'{x1} {operation} {x2}')
+        
 
 
     def exitRelOp(self, ctx: DecafParser.RelOpContext):
@@ -534,22 +550,24 @@ class CustomListener(DecafListener):
         operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             self.nodeTypes[ctx] = 'boolean'
+
+            #INTERMEDIATE
+            #creamos el lado izquierdo del three address code..
+            if not isinstance(ctx.parentCtx, DecafParser.WhileContext) and not isinstance(ctx.parentCtx, DecafParser.IfContext):
+                self.addTempVar('boolean', 1, False)
+                #obtenemos la variable recien creada
+                targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+                #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+                self.nodeTempVars[ctx] = targetTemp.name
+                self.writer.write(f'{targetTemp.name} = ', self.nest)
+                x1, x2 = self.writer.getOperators(self, op1, op2)
+                self.writer.writeLine(f'{x1} {operation} {x2}')
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'arithmetic operator expected integer entities', ctx.start.line)
 
-        #INTERMEDIATE
-        #creamos el lado izquierdo del three address code..
-        if not isinstance(ctx.parentCtx, DecafParser.WhileContext) or isinstance(ctx.parentCtx, DecafParser.IfContext):
-            self.addTempVar('boolean', 1, False)
-            #obtenemos la variable recien creada
-            targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
-
-            #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
-            self.nodeTempVars[ctx] = targetTemp.name
-            self.writer.write(f'{targetTemp.name} = ', self.nest)
-            x1, x2 = self.writer.getOperators(self, op1, op2)
-            self.writer.writeLine(f'{x1} {operation} {x2}')
+       
 
 
     def exitCondOp(self, ctx: DecafParser.CondOpContext):
@@ -558,22 +576,25 @@ class CustomListener(DecafListener):
         operation = ctx.getChild(1).getText()
         if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             self.nodeTypes[ctx] = 'boolean'
+
+            #INTERMEDIATE
+            #creamos el lado izquierdo del three address code..
+            if not isinstance(ctx.parentCtx, DecafParser.WhileContext) and not isinstance(ctx.parentCtx, DecafParser.IfContext):
+                self.addTempVar('boolean', 1, False)
+                #obtenemos la variable recien creada
+                targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
+
+                #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
+                self.nodeTempVars[ctx] = targetTemp.name
+                self.writer.write(f'{targetTemp.name} = ', self.nest)
+                x1, x2 = self.writer.getOperators(self, op1, op2)
+                self.writer.writeLine(f'{x1} {operation} {x2}')
+
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Entity type error', 'logical operator expected boolean entities', ctx.start.line)
 
-        #INTERMEDIATE
-        #creamos el lado izquierdo del three address code..
-        if not isinstance(ctx.parentCtx, DecafParser.WhileContext) or isinstance(ctx.parentCtx, DecafParser.IfContext):
-            self.addTempVar('boolean', 1, False)
-            #obtenemos la variable recien creada
-            targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
-
-            #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
-            self.nodeTempVars[ctx] = targetTemp.name
-            self.writer.write(f'{targetTemp.name} = ', self.nest)
-            x1, x2 = self.writer.getOperators(self, op1, op2)
-            self.writer.writeLine(f'{x1} {operation} {x2}')
+       
 
     def exitMinusOp(self, ctx: DecafParser.MinusOpContext):
         op1 = ctx.getChild(1)
@@ -710,13 +731,20 @@ class CustomListener(DecafListener):
         if self.nodeTypes[op1] == self.nodeTypes[op2]:
             self.nodeTypes[ctx] = self.nodeTypes[op1]
 
+            assign, val = self.writer.getOperators(self, op1, op2)
+
+            if op1.getChildCount() <= 1:
+            #hay que buscar la variable y actualizarle el valor.
+                varObj, scope = self.findSymbolTableEntry(op1.getText(), self.currentScope)
+                varObj.value = val
+
+            self.writer.writeLine(f'{assign} = {val}', self.nest)
+
         else:
             self.nodeTypes = '-1'
             self.add_errors('Assignment error', 'variable and value are not the same', ctx.start.line)
 
-        assign, val = self.writer.getOperators(self, op1, op2)
-        self.writer.writeLine(f'{assign} = {val}', self.nest)
-
+        
     
     def enterIf(self, ctx: DecafParser.IfContext):
         expr = ctx.expression()
@@ -747,11 +775,12 @@ class CustomListener(DecafListener):
         if self.nodeTypes[expr] == 'boolean':
             self.nodeTypes[ctx] = 'boolean'
 
+            self.writer.writeLine(f'EXIT IF_{self.nest}', self.nest)
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'if expression must return boolean', ctx.start.line)
 
-        self.writer.writeLine(f'EXIT IF_{self.nest}', self.nest)
+        
 
     
     def enterWhile(self, ctx: DecafParser.WhileContext):
@@ -785,12 +814,13 @@ class CustomListener(DecafListener):
         if self.nodeTypes[expr] == 'boolean':
             self.nodeTypes[ctx] = 'boolean'
 
+            #intermediate
+            self.writer.getTails(self, ctx.parentCtx, ctx)
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'while expression must return boolean', ctx.start.line)
         
-        #intermediate
-        self.writer.getTails(self, ctx.parentCtx, ctx)
+        
     
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         
@@ -825,7 +855,7 @@ class CustomListener(DecafListener):
         return search, scope
 
     def methodFinder(self, methodId):
-        obj = self.scopes[methodId]
+        obj = self.scopes.get(methodId)
         return obj
 
 

@@ -1,50 +1,24 @@
-class Program
-{
-
-int a;
-int b;
-
-void OutputInt(int n)
-{
-}
-
-void Test(int a, int b, int c, int d)
-{
-	OutputInt(a);
-	OutputInt(b);
-	OutputInt(c);
-	OutputInt(d);
-
-}
-
-
-int InputInt(void)
-{return 0;}
-
-void main(void)
-{
-
-	a = x;
-	b = 3;
-	
-	OutputInt(a);
-	Test(5,6,7,8);
-
-
-	if (a==3)
+	class Program
 	{
-		int b;
-		b = 5;
-		OutputInt(b);
+	void OutputInt(int b){}
+	void main(void)
+	{
+		boolean a;
+		boolean b;
+		int x;
+		if (a && b)
+		{
+			OutputInt(x);
+		}
+
+		OutputInt(3);
+
 	}
 
-	OutputInt(b);
 
-}
-
+	}
 
 
-}
 
 
 
