@@ -1,27 +1,25 @@
 class Program
+{ 
+int factorial(int n)
 {
-struct MyTest
-{
-	int n;
-	char b;
-	int c[10];
-};
+	if (n==0)
+	{
+		return 1;
+	}
+	else
+	{
+		return n*factorial(n-1);
+	}
 
-struct OtherTest
-{
-	struct MyTest T[10];
-	int n;
-};
-
+}
 
 void main(void)
 {
-	struct OtherTest M[5];
-	int i;
-	boolean i;
-	i = 1;	
-	M[i].T[1].n = 2;
-	
+	int y[10];
+	y[2] = 2;
+	y[3] = 3;
+	y[1]= y[2]+y[3];
+	y[4] = factorial(y[1]);
 }
 
 }

@@ -719,7 +719,9 @@ class CustomListener(DecafListener):
         
         self.addTempVar(self.nodeTypes[ctx], 1, False)
         targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
-
+        self.nodeTempVars[ctx] = targetTemp.name
+        call = ctx.getChild(0).getChild(0).getText()
+        self.writer.writeLine(f'{targetTemp.name} = {call}', self.nest)
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
 

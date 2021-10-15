@@ -2,7 +2,7 @@ class Program
 {
 struct A
 {
-	int a[3];
+	int a;
 };
 
 struct B
@@ -27,10 +27,10 @@ int factorial(int n)
 
 void main(void)
 {
-	struct B y;
-	y.c.a[2] = factorial(y.c);
+	struct B y; //21
+	y.b = 5;
+	y.c.a = factorial(y.b);
 }
 
 
 }
-
