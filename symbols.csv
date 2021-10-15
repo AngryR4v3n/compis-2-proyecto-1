@@ -1,0 +1,2 @@
+SCOPE, TYPE, NAME, OFFSET, ISARRAY, NUM, SIZE 
+main, structA, y, 0, True, 3, 48 

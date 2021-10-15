@@ -246,29 +246,27 @@ class CustomListener(DecafListener):
                 self.nodeTypes[ctx] = '-1'
                 self.add_errors('Undeclared struct', 'struct has not been defined', ctx.start.line)
             else:
-                #TODO: Revisar que exista array de structs..
+                
                 isArray = ctx.NUM()
                 if not isArray:
                     isArray = False
                     num = 1
                 else:
                     isArray = True
-                    #TODO: Mejorar obtener el numero del array...
                     num = self.getNumber(ctx.getChild(3))
                 if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
                     self.addVar(varType, varId, 'structVar', num, isArray)
                         
         else:
             if not isinstance(ctx.parentCtx, DecafParser.StructDeclarationContext):
-                #TODO: Revisar que exista array de structs..
+                
                 isArray = ctx.NUM()
                 if not isArray:
                     isArray = False
                     num = 1
                 else:
                     isArray = True
-                    #TODO: Mejorar obtener el numero del array...
-                    num = int(ctx.getChild(3).getText())
+                    num = self.getNumber(ctx.getChild(3))
                 
                 added = self.addVar(varType, varId, "var", num, isArray, value=self.defaults[varType])
 
@@ -851,6 +849,9 @@ class CustomListener(DecafListener):
         if "main" not in self.scopes.keys():
             self.add_errors("Missing method",
                             "missing main() method", ctx.start.line)
+
+        #cerramos el file
+        self.writer.f.close()
 
         
 
