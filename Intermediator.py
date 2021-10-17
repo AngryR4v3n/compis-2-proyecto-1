@@ -20,17 +20,22 @@ class Intermediator:
 
     def getVariableCode(self, var, scope, obj=None, fullCall=None, isStruct=False, isArray=False, num=0):
         prefix = ''
-        try:
-            num = int(num)
-        except:
-            # asumimos que es una variable
-            num, scope = obj.findSymbolTableEntry(num, obj.currentScope)
-            num = num.value
-
+        isVar = False
         if scope == 'global':
             prefix = 'G'
         else:
             prefix = 'vArr'
+
+
+        try:
+            num = int(num)
+        except:
+            # asumimos que es una variable
+            isVar = True
+            
+            
+
+       
         #para los t's
         if var.decafType == 'tempVar':
             return var.name
@@ -40,8 +45,10 @@ class Intermediator:
         
         #esto no funcionara con arrays de structs
         elif isArray and not isStruct:
-                
-            return f'{prefix}[{var.offset + int(num) * self.sizes[var.varType]}]'
+            if not isVar:
+                return f'{prefix}[{var.offset + int(num) * self.sizes[var.varType]}]'
+            else:
+                return f'{prefix}[{num}]'
 
         elif isStruct:
             #ya cuenta donde inicia la variable raiz.
@@ -96,7 +103,7 @@ class Intermediator:
                     if res1.isArray:
 
                         #ARRAY Y STRUCT
-                        num = int(obj.getNumber(op1))
+                        num = obj.getNumber(op1, ArrVar=res1)
                         res1 = self.getVariableCode(res1, scope, fullCall=op1.getText(), obj=obj, isArray=True, isStruct=True, num=num)
                     else:
                         #SOLO ES STRUCT
@@ -109,7 +116,7 @@ class Intermediator:
                     #Determinamos si es ARRAY
                     if res1.isArray:
                         #ARRAY
-                        num = obj.getNumber(op1.getChild(2))
+                        num = obj.getNumber(op1.getChild(2), ArrVar=res1)
                         res1 = self.getVariableCode(res1, scope, isArray=True, num=num)
                     else:
                         #VARIABLE NORMAL
@@ -147,7 +154,7 @@ class Intermediator:
                     if res2.isArray:
 
                         #ARRAY Y STRUCT
-                        num = int(obj.getNumber(op2))
+                        num = obj.getNumber(op2, ArrVar=res2)
                         res2 = self.getVariableCode(res2, scope, fullCall=op2.getChild(0).getText(), obj=obj, isArray=True, isStruct=True, num=num)
                     else:
                         #SOLO ES STRUCT
@@ -161,7 +168,7 @@ class Intermediator:
                     if res2.isArray:
 
                         #ARRAY 
-                        num = int(obj.getNumber(op2))
+                        num = obj.getNumber(op2, ArrVar=res2)
                         res2 = self.getVariableCode(res2, scope, isArray=True, num=num)
                     else:
                         #VARIABLE NORMAL
@@ -177,7 +184,7 @@ class Intermediator:
                     if res2.isArray:
 
                         #ARRAY Y STRUCT
-                        num = int(obj.getNumber(op2))
+                        num = obj.getNumber(op2, ArrVar=res2)
                         res2 = self.getVariableCode(res2, scope, fullCall=op2.getText(), obj=obj, isArray=True, isStruct=True, num=num)
                     else:
                         #SOLO ES STRUCT

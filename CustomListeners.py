@@ -102,7 +102,7 @@ class CustomListener(DecafListener):
 
         return canAdd
 
-    def getNumber(self, node, plain=False):
+    def getNumber(self, node, plain=False, ArrVar=None):
         if plain:
             txt = node
         else:
@@ -113,15 +113,50 @@ class CustomListener(DecafListener):
         #revisamos que sea un numero
         try:
             if len(txt) > 1:
-                a = int(txt[init+1:end])
-                return txt[init+1:end]
+                if init != -1 and end != -1:
+                    a = int(txt[init+1:end])
+                    return txt[init+1:end]
+                else:
+                    return int(txt)
             else:
                 a = int(txt)
                 return txt
         except:
 
             #si truena: puede ser una variable, o un metodo.
-            
+            #solucion de Bidkar
+            if ArrVar:
+                inter = None
+                self.addTempVar('int', 1, False)
+                var, scope = self.findSymbolTableEntry(f't{self.tempCount-1}', self.currentScope)
+                #si es exp
+                if isinstance(node, DecafParser.LocationExpContext):
+                    inter=self.nodeTempVars.get(node.getChild(0).getChild(2))
+                elif isinstance(node, DecafParser.LocationContext):
+                    inter=self.nodeTempVars.get(node.getChild(2))
+
+                if inter:
+                    inter=var
+                else:
+                    if len(txt) > 1 and end != -1:
+                        inter, scope = self.findSymbolTableEntry(txt[init+1:end], self.currentScope)
+                    else:
+                        inter, scope = self.findSymbolTableEntry(txt, self.currentScope)
+                    
+                if inter.decafType != 'tempVar':
+                    inter = self.writer.getVariableCode(inter, self.currentScope, self, num=1)
+
+                else:
+                    inter = inter.name
+                #si es primitivo
+                if ArrVar.varType in self.primitives:
+                    self.writer.writeLine(f'{var.name} = {inter} * {self.sizes[ArrVar.varType]}', self.nest)
+                else:
+                    self.writer.writeLine(f'{var.name} = {inter} * {int(ArrVar.size / ArrVar.num)}', self.nest)
+                
+                return var.name
+
+            #esto extrae el valor de la variable.
             loop = False
             if init != -1 and end != -1:
                 search = txt[init+1:end]
