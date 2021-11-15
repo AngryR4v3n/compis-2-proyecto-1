@@ -61,7 +61,7 @@ class Intermediator:
         #3 casos por operador: Variable, literal y expresion
         res1 = None
         res2 = None
-        #TODO IDENTIFICAR ARRAY STRUCTS...
+
         if isinstance(op1, DecafParser.LocationExpContext) or isinstance(op1, DecafParser.LocationContext):
             
             if isinstance(op1, DecafParser.LocationExpContext):
@@ -254,7 +254,3 @@ class Intermediator:
         elif isinstance(ctx, DecafParser.MethodDeclarationContext):
             self.writeLine(f'END {ctx.getChild(1).getText()}')
             self.writeLine('\n')
-
-
-        
-

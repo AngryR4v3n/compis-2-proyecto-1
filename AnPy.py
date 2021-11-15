@@ -10,6 +10,8 @@ filepath = None
 global x
 global errors
 from subprocess import Popen,PIPE
+
+from AssGenerator import AssGenerator
 class GUI:
     
     def __init__(self) -> None:
@@ -104,7 +106,7 @@ class GUI:
             self.terminalSc.insert(tk.END, ok)
             self.terminalSc.insert(tk.END, "[*] No errors found \n")
             self.terminalSc.insert(tk.END, "[*] Generated intermediate code \n")
-            self.terminalSc.insert(tk.END, "[X] ARM code (to be implemented) \n")
+            self.terminalSc.insert(tk.END, "[-] ARM code (I'm implementing it!) \n")
             self.terminalSc.insert(tk.END, "----------------------------------------------- \n")
             self.terminalSc.insert(tk.END, "Printing symbol table as symbols.csv \n")
             #imprimimos en csv los scopes.
@@ -125,6 +127,8 @@ class GUI:
             self.terminalSc.insert(tk.END, "Done. \n")
             tk.messagebox.showinfo(title="Successfully compiled!", message="No syntax errors found.")
 
+            writer = AssGenerator()
+            '''
             try:
                 tk.messagebox.showinfo(title="CSV viewer", message="Using Libreoffice calc.")
                 self.subprocess_cmd(f'{os.getcwd()}','kate .code.txt','libreoffice --calc symbols.csv')
@@ -132,6 +136,7 @@ class GUI:
                 #os.system('libreoffice --calc symbols.csv')
             except:
                 tk.messagebox.showerror(title="Couldn't launch csv viewer!", message="You can still check the file at ./symbols.csv")
+            '''
 
 
         else:

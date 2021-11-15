@@ -1,0 +1,33 @@
+class Program {
+    void OutputInt(int v) {}
+
+    void fib(int n) {
+        int a;
+        int b;
+        int c;
+        int h;
+        a = 0;
+        b = 1;
+        h = n - 2;
+        while (h > 0) {
+            c = a + b;
+            a = b;
+            b = c;
+            OutputInt(c);
+            n = n - 1;
+        }
+    }
+
+    void main(void) {
+        int n;
+        int h;
+        int j;
+        h = 7;
+        j = 4;
+        n = 5;
+        fib(n);
+    }
+}
+
+
+

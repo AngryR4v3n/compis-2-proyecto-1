@@ -1,0 +1,91 @@
+function Minimo: 
+	t0 = vArr[40] + 2
+	t1 = t0 * 4
+	vArr[44] = G[t1]
+	vArr[48] = vArr[40]
+	WHILE_1
+	t2 = vArr[40] < 10
+	IF t2 > 0 GOTO IF_TRUE1
+	GOTO END_WHILE1
+	IF_TRUE_1
+		t3 = G[0] < vArr[44]
+		IF_2 t3 > 0 GOTO IF_TRUE2
+		GOTO IF_FALSE2
+		IF_TRUE_2
+			t4 = vArr[40] * 4
+			vArr[44] = G[t4]
+			vArr[48] = vArr[40]
+		EXIT IF_2
+		t5 = vArr[40] + 1
+		vArr[40] = t5
+	GOTO WHILE_1
+	END WHILE_1
+	RETURN vArr[48]
+END Minimo
+
+
+function Ordenar: 
+	vArr[70] = 0
+	WHILE_1
+	t6 = vArr[70] < 10
+	IF t6 > 0 GOTO IF_TRUE1
+	GOTO END_WHILE1
+	IF_TRUE_1
+		PARAM vArr[70]
+		CALL Minimo, 1
+		t7 = Minimo
+		vArr[83] = t7
+		t8 = vArr[83] * 4
+		vArr[78] = G[t8]
+		t9 = vArr[83] * 4
+		t10 = vArr[70] * 4
+		G[t9] = G[t10]
+		t11 = vArr[70] * 4
+		G[t11] = vArr[78]
+		t12 = vArr[70] + 1
+		vArr[70] = t12
+	GOTO WHILE_1
+	END WHILE_1
+END Ordenar
+
+
+function OutputInt: 
+END OutputInt
+
+
+function InputInt: 
+	RETURN 0
+END InputInt
+
+
+function main: 
+	vArr[115] = 0
+	WHILE_1
+	t13 = vArr[115] < 10
+	IF t13 > 0 GOTO IF_TRUE1
+	GOTO END_WHILE1
+	IF_TRUE_1
+		CALL InputInt, 0
+		t14 = InputInt
+		t15 = vArr[115] * 4
+		G[t15] = t14
+		t16 = vArr[115] + 1
+		vArr[115] = t16
+	GOTO WHILE_1
+	END WHILE_1
+	CALL Ordenar, 0
+	vArr[115] = 0
+	WHILE_1
+	t17 = vArr[115] < 10
+	IF t17 > 0 GOTO IF_TRUE1
+	GOTO END_WHILE1
+	IF_TRUE_1
+		PARAM G[0]
+		CALL OutputInt, 1
+		t18 = vArr[115] + 1
+		vArr[115] = t18
+	GOTO WHILE_1
+	END WHILE_1
+END main
+
+

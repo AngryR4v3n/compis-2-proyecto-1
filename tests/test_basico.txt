@@ -1,0 +1,18 @@
+class Program
+{
+
+    void OutputInt(int n)
+    {
+    }
+
+    void main(void)
+    {
+        int b;
+        int a;
+        int c;
+        b = 9;
+        a = b + 3;
+        OutputInt(a);
+        
+    }
+}

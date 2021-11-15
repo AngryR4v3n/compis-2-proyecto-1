@@ -1,41 +1,14 @@
-function Ordenar: 
-	vArr[40] = 1
-	WHILE_1
-	t0 = vArr[40] < 10
-	IF t0 > 0 GOTO IF_TRUE1
-	GOTO END_WHILE1
-	IF_TRUE_1
-		vArr[45] = 1
-		t1 = vArr[45] * 4
-		vArr[49] = G[t1]
-		t2 = vArr[40] + 1
-		t3 = vArr[45] * 4
-		t4 = t4 * 4
-		G[t3] = G[t4]
-		t5 = vArr[40] * 4
-		G[t5] = vArr[49]
-		t6 = vArr[40] + 1
-		vArr[40] = t6
-	GOTO WHILE_1
-	END WHILE_1
-END Ordenar
-
-
 function OutputInt: 
+	PARAMETER vArr[0]
 END OutputInt
 
 
-function InputInt: 
-	RETURN 0
-END InputInt
-
-
 function main: 
-	t7 = 4 + 1
-	PARAM t7
-	CALL InputInt, 1
-	t8 = InputInt
-	vArr[85] = t8
+	vArr[4] = 9
+	t0 = vArr[4] + 3
+	vArr[8] = t0
+	PARAM vArr[8]
+	CALL OutputInt, 1
 END main
 
 

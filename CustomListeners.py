@@ -136,18 +136,16 @@ class CustomListener(DecafListener):
                     inter=self.nodeTempVars.get(node.getChild(2))
 
                 if inter:
-                    inter=var
+                    pass
                 else:
                     if len(txt) > 1 and end != -1:
                         inter, scope = self.findSymbolTableEntry(txt[init+1:end], self.currentScope)
                     else:
                         inter, scope = self.findSymbolTableEntry(txt, self.currentScope)
                     
-                if inter.decafType != 'tempVar':
+                #si es string, es una temporal 
+                if not isinstance(inter, str):
                     inter = self.writer.getVariableCode(inter, self.currentScope, self, num=1)
-
-                else:
-                    inter = inter.name
                 #si es primitivo
                 if ArrVar.varType in self.primitives:
                     self.writer.writeLine(f'{var.name} = {inter} * {self.sizes[ArrVar.varType]}', self.nest)
@@ -317,6 +315,7 @@ class CustomListener(DecafListener):
         methodType = ctx.getChild(0).getText()
         methodName = ctx.getChild(1).getText()
 
+        
         self.currentMethodName = methodName
         self.pushScope(methodName)
 
@@ -349,6 +348,8 @@ class CustomListener(DecafListener):
                 added = self.addVar(paramType, paramId, "param", None, isArray, value=self.defaults[paramType])
             if (added):
                 self.nodeTypes[ctx] = paramType
+                target, _ = self.findSymbolTableEntry(paramId, self.currentScope)
+                self.writer.writeLine(f'\tPARAMETER vArr[{target.offset}]')
             else:
                 self.nodeTypes[ctx] = '-1'
                 errorMsg = f"{paramId} parameter already exists!"
@@ -861,7 +862,7 @@ class CustomListener(DecafListener):
         
         
         self.writer.writeLine(f'IF {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
-        self.writer.writeLine(f'GOTO END_WHILE{self.nest}', self.nest)
+        self.writer.writeLine(f'GOTO EXIT_WHILE{self.nest}', self.nest)
 
 
     def exitWhile(self, ctx: DecafParser.WhileContext):
