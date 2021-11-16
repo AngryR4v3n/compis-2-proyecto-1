@@ -21,6 +21,7 @@ class CustomListener(DecafListener):
         self.structs = {}
         self.structStack = []
         self.nest = 1
+        self.loopCounter = 1
         self.addScope('global')
         #type and return management
         self.nodeTypes = {}
@@ -822,7 +823,7 @@ class CustomListener(DecafListener):
         else:
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         
-        self.writer.writeLine(f'IF_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
+        self.writer.writeLine(f'IFZ_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
         self.writer.writeLine(f'GOTO IF_FALSE{self.nest}', self.nest)
 
 
@@ -852,7 +853,8 @@ class CustomListener(DecafListener):
         storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
         
         #head
-        self.writer.writeLine(f'WHILE_{self.nest}', self.nest)
+        self.writer.writeLine(f'WHILE_{self.loopCounter}:', self.nest)
+        
 
         #condicional
         if expr.getChildCount() > 1:
@@ -861,8 +863,8 @@ class CustomListener(DecafListener):
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         
         
-        self.writer.writeLine(f'IF {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
-        self.writer.writeLine(f'GOTO EXIT_WHILE{self.nest}', self.nest)
+        self.writer.writeLine(f'IFZ {storedVal.name} > 0 GOTO END_WHILE_{self.nest}', self.nest)
+        self.loopCounter += 1
 
 
     def exitWhile(self, ctx: DecafParser.WhileContext):

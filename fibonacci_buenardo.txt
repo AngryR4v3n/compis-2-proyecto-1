@@ -1,0 +1,63 @@
+.global main 
+.func main 
+
+_OutputInt: 
+MOV R4, LR          @ store LR since printf call overwrites 
+LDR R0,=result_str  @ string at label hello_str: 
+BL printf           @ call printf, where R1 is the print argument 
+MOV LR, R4          @ restore LR from R4 
+MOV PC, LR          @ return 
+
+_fib:
+mov R8, R1
+mov R9, #0 @n1
+mov R10, #1 @n2
+mov R5, #0 @nth
+mov R6, #0 @count
+mov R1, R9
+.WHILE_LOOP_0:
+cmp R6, R8
+beq .WHILE_ENDLOOP_0
+BL _OutputInt
+add R7, R10, R9
+
+mov R5, R7
+
+
+
+mov R9, R10
+mov R1, R9
+mov R10, R5
+add R7, R6, #1
+mov R6, R7
+
+b .WHILE_LOOP_0
+
+.WHILE_ENDLOOP_0:
+b _exit
+
+main:
+mov R7, #7
+mov R8,R7
+mov R7,R1
+mov R1,R8
+bl _fib
+
+B _exit 
+
+_exit: 
+MOV R7, #4          @ write syscall, 4 
+MOV R0, #1          @ output stream to monitor, 1 
+MOV R2, #21         @ print string length 
+LDR R1,=exit_str    @ string at label exit_str: 
+SWI 0               @ execute syscall 
+MOV R7, #1          @ terminate syscall, 1 
+SWI 0               @ execute syscall 
+
+.data 
+add_str: 
+.ascii "Adding numbers... \n"
+result_str: 
+.asciz "Sum = %d\n"
+ exit_str: 
+.ascii "Terminating program."

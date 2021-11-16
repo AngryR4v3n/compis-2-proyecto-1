@@ -3,6 +3,9 @@ class Program
 
     void OutputInt(int n)
     {
+		while(n < 2){
+
+		}
     }
 
     void main(void)
@@ -12,6 +15,7 @@ class Program
         int c;
         b = 9;
         a = b + 3;
+		while(a > 3){}
         OutputInt(a);
         
     }

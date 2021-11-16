@@ -1,6 +1,11 @@
 SCOPE, TYPE, NAME, OFFSET, ISARRAY, NUM, SIZE 
 OutputInt, int, n, 0, False, 1, 4 
-main, int, b, 4, False, 1, 4 
-main, int, a, 8, False, 1, 4 
-main, int, c, 12, False, 1, 4 
-main, int, t0, 16, False, 1, 4 
+fib, int, n, 4, False, 1, 4 
+fib, int, a, 8, False, 1, 4 
+fib, int, b, 12, False, 1, 4 
+fib, int, c, 16, False, 1, 4 
+fib, int, count, 20, False, 1, 4 
+fib, boolean, t0, 24, False, 1, 1 
+fib1, int, t1, 25, False, 1, 4 
+fib1, int, t2, 29, False, 1, 4 
+main, int, n, 33, False, 1, 4 
