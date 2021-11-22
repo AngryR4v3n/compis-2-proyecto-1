@@ -132,7 +132,7 @@ class Intermediator:
         #si es method call o resultado de una operacion directa
         elif isinstance(op1, DecafParser.MethodCallExpContext) or isinstance(op1, DecafParser.OtherIntOpContext) or isinstance(op1, DecafParser.SumOpContext) or isinstance(op1, DecafParser.RelOpContext) or isinstance(op1, DecafParser.EqOpContext) or isinstance(op1, DecafParser.CondOpContext) or isinstance(op1, DecafParser.ParensOpContext):
             if isinstance(op1, DecafParser.MethodCallExpContext):
-                targetName = obj.nodeTempVars[op1.getChild(0)]
+                targetName = obj.nodeTempVars[op1]
             
             elif isinstance(op1, DecafParser.OtherIntOpContext) or isinstance(op1, DecafParser.SumOpContext) or isinstance(op1, DecafParser.RelOpContext) or isinstance(op1, DecafParser.EqOpContext) or isinstance(op1, DecafParser.CondOpContext):
                 targetName = obj.nodeTempVars[op1]
@@ -233,16 +233,18 @@ class Intermediator:
                     break
             #Si es el ultimo bloque y la cantidad de Block context es mayor a 1, es el false
             blockNumber = parentCtx.block()
-
+            
             if len(blockNumber) > 1 and idx == len(parentCtx.children) - 1:
                 #ELSE
-                self.writeLine(f'IF_FALSE_{obj.nest}:', obj.nest)
+                self.writeLine(f'IF_FALSE{obj.ifCounter-1}:', obj.nest)
             else:
                 #TRUE
-                self.writeLine(f'IF_TRUE_{obj.nest}:', obj.nest)
-        
+                self.writeLine(f'IF_TRUE{obj.ifCounter-1}:', obj.nest)
+                pass
+            
         elif isinstance(parentCtx, DecafParser.WhileContext):
-            self.writeLine(f'IF_TRUE_{obj.nest}:', obj.nest)
+            pass
+            #self.writeLine(f'IF_TRUE{obj.ifCounter-1}:', obj.nest)
 
     def getTails(self, obj, parentCtx, ctx):
 

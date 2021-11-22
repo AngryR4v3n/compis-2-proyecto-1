@@ -4,16 +4,23 @@ class AssGenerator():
         self.head = ''
         self.main = ''
         self.body = ''
+        self.aux = ''
         self.tail = ''
+        self.printer = ''
+        self.falseStatements = []
         self.f = open('miprog.s', 'w')
-        self.registers_av = {"R1": "","R2": "PARAM", "R3": "PARAM", "R4": "PARAM", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
+        self.registers_av = {"R1": "","R2": "", "R3": "", "R4": "", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
         self.param_registers = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7']
-        self.cmpOps = {"<": 'bgt'}
+        self.cmpOps = {"<": 'bgt',  "==": "bne", ">": "blt"}
         self.flagBranch = None
+        self.funciones = []
+        self.loops = []
+        self.gotoSkip = []
         self.intermediate = open('.code.txt', 'r').readlines()
         self.createHead()
         self.createExit()
         self.createTail()
+        self.search_alt(self.intermediate)
         self.function_identifier(self.intermediate)
         self.write()
 
@@ -52,28 +59,47 @@ exit:
 
     def createPrint(self):
         #procedimiento
-        self.body += """
-	MOV R4, LR          @ store LR since printf call overwrites
-	LDR R0,=result_str  @ string at label hello_str:
-	BL printf           @ call printf, where R1 is the print argument
-	MOV LR, R4          @ restore LR from R4
-	MOV PC, LR          @ return\n
+        self.printer += """OutputInt:
+    PUSH {LR}          @ store LR since printf call overwrites 
+    LDR R0,=result_str  @ string at label hello_str: 
+    BL printf           @ call printf, where R1 is the print argument 
+    POP {PC}\n
 """
 
-    def function_identifier(self,content):
-        paramCounter = 1
+    def search_alt(self, content):
+        for elem in content:
+            if elem.strip().find('IF_FALSE') > -1:
+                name = elem.strip().replace(':', '')
+                self.falseStatements.append(name)
+                
+    def function_identifier(self, content):
+        paramCounter = 0
+        paramPush = 0
+        global var
+        var = ''
         for number, line in enumerate(content):
-            
+            line = line.strip()
             if line.find('function') > -1:
                 name = line.split('function')[1].strip()
-                self.body += f'{name}\n'
-                #restart de param counter si entramos a nueva funcion
-                paramCounter = 1
+                self.funciones.append(name.replace(':',''))
+                
+                if name.find('OutputInt') <= -1:
+                    var += f'{name}\n'
 
                 if name.find('OutputInt') > -1 :
                     self.createPrint()
-                
-                    
+
+                if name.find('OutputInt') == -1 and name.find('IF') == -1 and name.find('WHILE') == -1:
+                    var += '\tPUSH {LR}\n'
+
+            elif line.find(':') > -1 and line.find('OutputInt') <= -1 and line.find('END') <= -1: 
+                #es un if condicion
+                self.body += var
+                var = ''
+                var = self.aux
+                self.aux = ''
+                name = line.strip()
+                var += f'{name}\n'
 
             #convertir instrucciones
             splitted = line.strip().split(' ')
@@ -82,54 +108,69 @@ exit:
 
                 if '=' in splitted and len(splitted) > 3:
                     if elem == '+':
-                        self.body += f" \tADD {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        var  += f" \tADD {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
                         continue
                     elif elem == '-':
-                        self.body += f"\tSUB {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        var  += f"\tSUB {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
                         continue
                     elif elem == '*':
-                        self.body += f"\tMUL {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        var  += f"\tMUL {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
                         continue
 
                 elif elem == '=' and not len(splitted) > 3:
                     
-                    self.body += f"\tMOV {self.getReg(splitted[i-1])}, {self.getReg(splitted[-1].strip())}\n"
+                    if splitted[-1] in self.funciones:
+                        var  += f"\tMOV {self.getReg(splitted[i-1])}, R0\n"
+                    else:
+                        var  += f"\tMOV {self.getReg(splitted[i-1])}, {self.getReg(splitted[-1].strip())}\n"
 
                     if splitted[-1].find('t') > -1:
                         self.freeReg(splitted[-1].strip())
 
                     continue
 
-
                 if elem == 'RETURN':
                     variableToReturn = splitted[i + 1]
-                    self.body += f'\tMOV R0, {variableToReturn} \n'
-                    self.body += f'\tret \n'
+                    var  += f'\tMOV R0, {self.getReg(variableToReturn)} \n'
+                    if splitted[-1].find('t') > -1:
+                        self.freeReg(splitted[-1].strip())
+                    var  += '\tPOP {PC} \n \n '
 
                 if elem == 'PARAM':
-                    innerCounter = 1
                     if content[number + 1].find('OutputInt') > -1:
-                        self.body += self.getRegParam(splitted[i+1], 1)
+                        var += self.getRegParam(splitted[i+1], 1)
                     else:
-                        self.body += self.getRegParam(splitted[i+1],innerCounter)
+                        var += self.getRegParam(splitted[i+1],paramCounter)
+                        reg = self.getReg(splitted[i+1])
+                        register = f'R{paramCounter}'
+                        self.registers_av[register] = f'param {reg}' 
+                        var  += f"\tMOV {register}, {reg} \n"
+                        self.registers_av[reg] = splitted[i+1]
+                        if paramCounter < paramPush: 
+                            paramCounter += 1
+                        else:
+                            paramCounter = 1
 
                 if elem == 'CALL':
                     functionName = splitted[i+1].replace(',','')
 
                     if functionName.find('OutputInt') > -1:
 
-                        self.body += '\tBL OutputInt\n'
+                        var  += '\tBL OutputInt\n'
 
                     else:
-                        self.body += f'\tBL {functionName}\n'
+                        var  += f'\tBL {functionName}\n'
 
-                if elem.find("WHILE") > -1:
-                    if elem[-1] == ':':
-                        self.body += f'{elem}\n'
+
 
                 if elem.find("END_WHILE") > -1:
-                    if elem[-1] == ':':
-                        self.body += f'{elem}\n'
+                    if elem[-1] == ':' and elem not in self.loops:
+                        var  += f'{elem}\n'
+                        var += '\tb exit \n'
+                        self.loops.append(elem)
+                        continue
+
+                    
 
                 if elem.find("PARAMETER") > -1 and name != 'OutputInt:':
                     register = f'R{paramCounter}'
@@ -137,26 +178,52 @@ exit:
 
                     regi = self.getReg(splitted[i+1].strip())
 
-                    self.body += f'MOV {regi}, {register}\n'
+                    var  += f'\tMOV {regi}, {register}\n'
                     paramCounter += 1
+
+                if elem.find("BLOCK") > -1:
+                    #guardamos todo a aux
+                    self.aux += var
+                    var = ''
+                    #switch..
+                    var = self.body
+                    self.body = ''
 
                 #Para operaciones condicionales.
                 if elem in self.cmpOps.keys():
                     self.flagBranch = self.cmpOps[elem]
                     reg = self.getReg(splitted[i-1])
                     reg2 = self.getReg(splitted[i+1])
-                    self.body += f'cmp {reg}, {reg2}\n'
-
-
-                if elem.find('IFZ') > -1:
-                    if self.flagBranch != None:    
-                        self.body += f'{self.flagBranch} {splitted[-1].strip()}\n'
+                    
+                    if splitted[0].find('IFZ') > -1 or splitted[0].find('LOOP_COND') > -1:
+                        var  += f'\tcmp {reg}, {reg2}\n'
+                        if self.flagBranch != None:    
+                            var  += f'\t{self.flagBranch} {splitted[-1].strip()}\n'
+                            self.flagBranch = None
                         
                 
-                if elem.find('GOTO') > -1:
+                if line.find('GOTO') > -1:
                     
                     if splitted[0].strip() == 'GOTO':
-                        self.body += f'\tb {splitted[1]}\n'
+                        if splitted[1] not in self.gotoSkip:
+                            var  += f'\tb {splitted[1]}\n'
+                            self.gotoSkip.append(splitted[1])
+
+                if line.find('EXIT IF') > -1:
+                    for falseSt in self.falseStatements:
+                        if falseSt[-1] == line[-1]:
+                            var += f'\tB {falseSt}\n'
+                            self.falseStatements.pop()
+                            break
+
+
+                #NO DEBERIAN DE EXISTIR TEMPORALES
+                for elem in self.registers_av.keys():
+                    val = self.registers_av[elem]
+                    if val.find('t') > -1:
+                        self.registers_av[elem] = ''
+
+                
 
 
     def write(self):
@@ -167,10 +234,18 @@ exit:
         self.f.write(self.main)
         print(self.main)
         #body
-        self.f.write(self.body)
-        print(self.body)
-
-        #createExit
+        #self.f.write(self.body)
+        #print(self.body)
+        print('***********')
+        #print
+        print(self.printer)
+        self.f.write(self.printer)
+        
+        
+        #ifs
+        self.f.write(self.aux)
+        print(self.aux)
+        
         self.f.write(self.exit)
 
         self.f.write(self.tail)
@@ -186,7 +261,7 @@ exit:
         #en el caso que ya este guardado antes return el registro en donde esta
         var = var.strip()
 
-        if var.find("[") > -1 or var.find("t") > -1:
+        if var.find("[") > -1 or var.find("t") > -1 or var.find('vArr') > -1:
             for i in self.registers_av.keys():
                 if self.registers_av[i] == var:
                     register = i
@@ -197,7 +272,7 @@ exit:
             else:
                 #en el caso que no este guardado busco uno vacio y le asigno a ese registro vacio el valor de var
                 for i in self.registers_av.keys():
-                    if self.registers_av[i] == "":
+                    if self.registers_av[i] == "" or self.registers_av[i] == '':
                         self.registers_av[i] = var
                         register = i
                         break
@@ -205,7 +280,7 @@ exit:
                 if register != None:
                     return register
                 else:
-                    return "OUT OF REGISTERS PAPAITO\n finito compadre."
+                    return "OUT OF REGISTERS PAPAITO."
         else:
             return "#"+var
 
@@ -213,46 +288,49 @@ exit:
 
     def getRegParam(self, var, counter):
         register = None
-        var = var.strip()
+        global flag_main
         for i in self.registers_av.keys():
             if self.registers_av[i] == var:
                 register = i
                 break
-
         new_reg = "R" + str(counter)
         content = self.registers_av[new_reg]
-        if content != "" and content != 'PARAM' and register != new_reg:
+        if "PARAM" not in content and content != "" and register != new_reg and register != None:
             regi3 = None
             for i in self.registers_av.keys():
                 if self.registers_av[i] == "":
                     self.registers_av[i] = var
                     regi3 = i
                     break
-
+            
             #muevo el valor del parametro a un registro cualquiera
             arm_code = "\tMOV " + regi3 + "," + register + "\n"
             arm_code  += "\tMOV " + register + "," + new_reg + "\n"
             arm_code  += "\tMOV " + new_reg + "," + regi3 + "\n"
-
-
-            #intercambio de variables en descriptor
+            
+            #cambiamos los valores en nuestra tabla de registros disponibles
             self.registers_av[register] = content
             self.registers_av[new_reg] = self.registers_av[regi3]
             self.registers_av[regi3] = ""
-
-            #print("entre primer if ")
             return arm_code
-        
-        elif register != new_reg:
+
+        elif register != new_reg and register != None:
+            content = content.split(" ")
+            
             arm_code = "\tMOV " + new_reg + "," + register + "\n"
+            #if not flag_main:
+            #   arm_code += "PUSH {" + content[1] + "} \n" 
             
             return arm_code
+        elif var == "R0":
+            arm_code = "\tMOV " + new_reg + ", " + var + "\n"
+            return arm_code
         else:
-            return ""
-
-
+            arm_code = "\tMOV " + new_reg + ", #" + var + "\n"
+            return arm_code
+        
     def freeReg(self, var):
         for i in self.registers_av.keys():
             if self.registers_av[i] == var:
-                self.registers_av[i] = ''
+                self.registers_av[i] = ""
                 break

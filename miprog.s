@@ -3,37 +3,41 @@
 .func main
 
 OutputInt:
+    PUSH {LR}          @ store LR since printf call overwrites 
+    LDR R0,=result_str  @ string at label hello_str: 
+    BL printf           @ call printf, where R1 is the print argument 
+    POP {PC}
 
-	MOV R4, LR          @ store LR since printf call overwrites
-	LDR R0,=result_str  @ string at label hello_str:
-	BL printf           @ call printf, where R1 is the print argument
-	MOV LR, R4          @ restore LR from R4
-	MOV PC, LR          @ return
-
-fib:
-MOV R5, R1
-	MOV R6, #0
-	MOV R7, #1
-	MOV R8, #0
-	MOV R9, #0
 WHILE_1:
-cmp R9, R5
-bgt END_WHILE_1
+	cmp R6, R1
+	bgt END_WHILE_1
+	MOV R6,R2
+	MOV R2,R1
 	MOV R1,R6
 	BL OutputInt
- 	ADD R10, R6, R7 
-	MOV R8, R10
-	MOV R6, R7
-	MOV R7, R8
- 	ADD R10, R9, #1 
-	MOV R9, R10
+ 	ADD R6, R1, R3 
+	MOV R4, R6
+	MOV R1, R3
+	MOV R3, R4
+ 	ADD R6, R5, #1 
+	MOV R5, R6
+fib:
+	PUSH {LR}
+	MOV R1, R0
+	MOV R2, #0
+	MOV R3, #1
+	MOV R4, #0
+	MOV R5, #0
 	b WHILE_1
 END_WHILE_1:
-    b exit
-
+	b exit 
 main:
-	MOV R10, #7
-	MOV R1,R10
+	PUSH {LR}
+	MOV R6, #7
+	MOV R7,R6
+	MOV R6,R1
+	MOV R1,R7
+	MOV R1, R1 
 	BL fib
 
 exit:

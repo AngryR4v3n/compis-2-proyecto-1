@@ -22,6 +22,7 @@ class CustomListener(DecafListener):
         self.structStack = []
         self.nest = 1
         self.loopCounter = 1
+        self.ifCounter = 1
         self.addScope('global')
         #type and return management
         self.nodeTypes = {}
@@ -431,7 +432,9 @@ class CustomListener(DecafListener):
         #Se sale de un scope.
         current = self.methodFinder(self.currentScope)
         self.nest -= 1
+        self.writer.writeLine('BLOCK', self.nest)
         self.pushScope(current.parent)
+        
 
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodName = ctx.getChild(1).getText()
@@ -818,13 +821,16 @@ class CustomListener(DecafListener):
         storedVal, scope = self.findSymbolTableEntry(f't{self.tempCount - 1}', self.currentScope)
         
         #condicional
+
+        '''
         if expr.getChildCount() > 1:
             self.writer.writeLine(f'{storedVal.name} = {op1} {operator} {op2}', self.nest)
         else:
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
+        '''
+        self.writer.writeLine(f'IFZ_{self.ifCounter} {storedVal.name} {operator} 0 GOTO IF_TRUE{self.ifCounter}', self.nest)
         
-        self.writer.writeLine(f'IFZ_{self.nest} {storedVal.name} > 0 GOTO IF_TRUE{self.nest}', self.nest)
-        self.writer.writeLine(f'GOTO IF_FALSE{self.nest}', self.nest)
+        self.ifCounter += 1
 
 
     def exitIf(self, ctx: DecafParser.IfContext):
@@ -834,7 +840,7 @@ class CustomListener(DecafListener):
         if self.nodeTypes[expr] == 'boolean':
             self.nodeTypes[ctx] = 'boolean'
 
-            self.writer.writeLine(f'EXIT IF_{self.nest}', self.nest)
+            self.writer.writeLine(f'EXIT IF_{self.ifCounter-1}', self.nest)
         else:
             self.nodeTypes[ctx] = '-1'
             self.add_errors('Type error', 'if expression must return boolean', ctx.start.line)
@@ -863,7 +869,7 @@ class CustomListener(DecafListener):
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         
         
-        self.writer.writeLine(f'IFZ {storedVal.name} > 0 GOTO END_WHILE_{self.nest}', self.nest)
+        self.writer.writeLine(f'LOOP_COND {storedVal.name} {operator} {op2} GOTO END_WHILE_{self.loopCounter}', self.nest)
         self.loopCounter += 1
 
 
