@@ -9,7 +9,7 @@ class AssGenerator():
         self.printer = ''
         self.falseStatements = []
         self.f = open('miprog.s', 'w')
-        self.registers_av = {"R1": "","R2": "", "R3": "", "R4": "", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
+        self.registers_av = {"R1": "PARAM","R2": "PARAM", "R3": "PARAM", "R4": "", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
         self.param_registers = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7']
         self.cmpOps = {"<": 'bgt',  "==": "bne", ">": "blt"}
         self.flagBranch = None
@@ -73,7 +73,7 @@ exit:
                 self.falseStatements.append(name)
                 
     def function_identifier(self, content):
-        paramCounter = 0
+        paramCounter = 1
         paramPush = 0
         global var
         var = ''
@@ -89,7 +89,7 @@ exit:
                 if name.find('OutputInt') > -1 :
                     self.createPrint()
 
-                if name.find('OutputInt') == -1 and name.find('IF') == -1 and name.find('WHILE') == -1:
+                if name.find('OutputInt') == -1 and name.find('IF') == -1 and name.find('WHILE') == -1 and name.find('main') == -1:
                     var += '\tPUSH {LR}\n'
 
             elif line.find(':') > -1 and line.find('OutputInt') <= -1 and line.find('END') <= -1: 
@@ -140,10 +140,12 @@ exit:
                     if content[number + 1].find('OutputInt') > -1:
                         var += self.getRegParam(splitted[i+1], 1)
                     else:
+                        #quitamos del previo
+                        paramCounter = paramCounter -1 
                         var += self.getRegParam(splitted[i+1],paramCounter)
                         reg = self.getReg(splitted[i+1])
                         register = f'R{paramCounter}'
-                        self.registers_av[register] = f'param {reg}' 
+                        self.registers_av[register] = f'PARAM {reg}' 
                         var  += f"\tMOV {register}, {reg} \n"
                         self.registers_av[reg] = splitted[i+1]
                         if paramCounter < paramPush: 
@@ -174,6 +176,7 @@ exit:
 
                 if elem.find("PARAMETER") > -1 and name != 'OutputInt:':
                     register = f'R{paramCounter}'
+                    paramPush += 1
                     self.registers_av[register] = 'PARAM'
 
                     regi = self.getReg(splitted[i+1].strip())
@@ -183,6 +186,9 @@ exit:
 
                 if elem.find("BLOCK") > -1:
                     #guardamos todo a aux
+                    if name.find('WHILE') > -1:
+                        name = name.replace(':','')
+                        var += f'\tb {name}\n'
                     self.aux += var
                     var = ''
                     #switch..
@@ -293,7 +299,7 @@ exit:
             if self.registers_av[i] == var:
                 register = i
                 break
-        new_reg = "R" + str(counter)
+        new_reg = f"R{counter}"
         content = self.registers_av[new_reg]
         if "PARAM" not in content and content != "" and register != new_reg and register != None:
             regi3 = None

@@ -9,35 +9,32 @@ OutputInt:
     POP {PC}
 
 WHILE_1:
-	cmp R6, R1
+	cmp R9, R4
 	bgt END_WHILE_1
-	MOV R6,R2
-	MOV R2,R1
-	MOV R1,R6
+	MOV R1,R5
 	BL OutputInt
- 	ADD R6, R1, R3 
-	MOV R4, R6
-	MOV R1, R3
-	MOV R3, R4
- 	ADD R6, R5, #1 
+ 	ADD R9, R5, R6 
+	MOV R7, R9
 	MOV R5, R6
+	MOV R6, R7
+ 	ADD R9, R8, #1 
+	MOV R8, R9
+	b WHILE_1
 fib:
 	PUSH {LR}
-	MOV R1, R0
-	MOV R2, #0
-	MOV R3, #1
-	MOV R4, #0
+	MOV R4, R1
 	MOV R5, #0
+	MOV R6, #1
+	MOV R7, #0
+	MOV R8, #0
 	b WHILE_1
 END_WHILE_1:
 	b exit 
+	b WHILE_1
 main:
-	PUSH {LR}
-	MOV R6, #7
-	MOV R7,R6
-	MOV R6,R1
-	MOV R1,R7
-	MOV R1, R1 
+	MOV R9, #7
+	MOV R1,R9
+	MOV R1, R9 
 	BL fib
 
 exit:
