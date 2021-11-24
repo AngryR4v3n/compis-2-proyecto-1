@@ -471,6 +471,10 @@ class CustomListener(DecafListener):
                 for elem in ctx.expression():
                     param = elem.getText()
                     res1, res2 = self.writer.getOperators(self, elem, None)
+                    #encontrar temp
+                    if res1.find('t') > -1:
+                        x, sc = self.findSymbolTableEntry(res1, self.currentScope)
+                        res1 = f'vArr[{x.offset}]'
                     self.writer.writeLine(f'PARAM {res1}', self.nest)
                 
                 self.writer.writeLine(f'CALL {name}, {len(ctx.expression())}', self.nest)
@@ -534,8 +538,8 @@ class CustomListener(DecafListener):
 
             #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
             self.nodeTempVars[ctx] = targetTemp.name
-            self.writer.write(f'{targetTemp.name} = ', self.nest)
-
+            #self.writer.write(f'{targetTemp.name} = ', self.nest)
+            self.writer.write(f'vArr[{targetTemp.offset}] = ')
             x1, x2 = self.writer.getOperators(self, op1, op2)
             self.writer.writeLine(f'{x1} {operator} {x2}')
         else:
@@ -800,6 +804,10 @@ class CustomListener(DecafListener):
                 varObj, scope = self.findSymbolTableEntry(op1.getText(), self.currentScope)                
                 varObj.value = val
 
+            if val.find('t') > -1:
+                val, sc = self.findSymbolTableEntry(val, self.currentScope)
+                val = f'vArr[{val.offset}]'
+
             self.writer.writeLine(f'{assign} = {val}', self.nest)
 
         else:
@@ -828,7 +836,7 @@ class CustomListener(DecafListener):
         else:
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         '''
-        self.writer.writeLine(f'IFZ_{self.ifCounter} {storedVal.name} {operator} 0 GOTO IF_TRUE{self.ifCounter}', self.nest)
+        self.writer.writeLine(f'IFZ_{self.ifCounter} {op1} {operator} {op2} GOTO IF_TRUE{self.ifCounter}', self.nest)
         
         self.ifCounter += 1
 
@@ -869,7 +877,7 @@ class CustomListener(DecafListener):
             self.writer.writeLine(f'{storedVal.name} = {op1}', self.nest)
         
         
-        self.writer.writeLine(f'LOOP_COND {storedVal.name} {operator} {op2} GOTO END_WHILE_{self.loopCounter}', self.nest)
+        self.writer.writeLine(f'LOOP_COND {op1} {operator} {op2} GOTO END_WHILE_{self.loopCounter}', self.nest)
         self.loopCounter += 1
 
 

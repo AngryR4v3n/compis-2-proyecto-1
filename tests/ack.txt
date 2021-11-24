@@ -24,9 +24,6 @@ class Program {
             return ackerman(x2, j);
         }
         
-        
-        
-        
     }
 
     void main(void) {

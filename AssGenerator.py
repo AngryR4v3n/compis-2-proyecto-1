@@ -10,9 +10,12 @@ class AssGenerator():
         self.falseStatements = []
         self.f = open('miprog.s', 'w')
         self.registers_av = {"R1": "PARAM","R2": "PARAM", "R3": "PARAM", "R4": "", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
-        self.param_registers = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7']
-        self.cmpOps = {"<": 'bgt',  "==": "bne", ">": "blt"}
+        self.asociated_params = {}
+        self.memDescriptor = {}
+        self.cmpOps = {"<": 'bgt',  "==": "bne", ">": "blt", '>=': 'bgt', '<=': 'blt', '!=': 'bne'}
+        self.cmpIfOps = {"<": 'blt', '==': 'beq', '>': 'bgt', '!=': 'bne', '>=': 'bgt', '<=': 'blt'}
         self.flagBranch = None
+        self.ifFlag = None
         self.funciones = []
         self.loops = []
         self.gotoSkip = []
@@ -105,7 +108,7 @@ exit:
             splitted = line.strip().split(' ')
             for i, elem in enumerate(splitted):
                 elem = elem.strip()
-
+                
                 if '=' in splitted and len(splitted) > 3:
                     if elem == '+':
                         var  += f" \tADD {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
@@ -140,18 +143,23 @@ exit:
                     if content[number + 1].find('OutputInt') > -1:
                         var += self.getRegParam(splitted[i+1], 1)
                     else:
-                        #quitamos del previo
-                        paramCounter = paramCounter -1 
-                        var += self.getRegParam(splitted[i+1],paramCounter)
+                        #revisamos asociados
+                        counter = number
+                        while line.find('CALL') == -1:
+                            counter +=1
+                            line = content[counter]
+
+                        toCall = content[counter].split(' ')[1]
+                        arrParams = self.asociated_params.get(toCall.replace(',',''))
+                        if paramPush > len(arrParams) - 1:
+                            paramPush = 0 
+                        numberReg = arrParams[paramPush]
+                        paramPush +=1
+                        var += self.getRegParam(splitted[i+1],numberReg)
                         reg = self.getReg(splitted[i+1])
-                        register = f'R{paramCounter}'
-                        self.registers_av[register] = f'PARAM {reg}' 
-                        var  += f"\tMOV {register}, {reg} \n"
+                       
                         self.registers_av[reg] = splitted[i+1]
-                        if paramCounter < paramPush: 
-                            paramCounter += 1
-                        else:
-                            paramCounter = 1
+                        
 
                 if elem == 'CALL':
                     functionName = splitted[i+1].replace(',','')
@@ -176,7 +184,17 @@ exit:
 
                 if elem.find("PARAMETER") > -1 and name != 'OutputInt:':
                     register = f'R{paramCounter}'
-                    paramPush += 1
+                    funct = name.replace(':','')
+                    #hacemos asociacion
+                    try:
+                        array = self.asociated_params[funct] 
+                    except KeyError:
+                        self.asociated_params[funct]  = []
+
+                    array = self.asociated_params[funct]
+                    array.append(paramCounter)
+
+
                     self.registers_av[register] = 'PARAM'
 
                     regi = self.getReg(splitted[i+1].strip())
@@ -195,9 +213,20 @@ exit:
                     var = self.body
                     self.body = ''
 
+                if elem.find('vArr') > -1:
+                    #descriptor..
+                    try:
+                        self.memDescriptor[elem]
+                    except:
+                        self.memDescriptor[elem] = int(elem[5:-1]) + 4
+                    #var += f'\t@ STR fp,  [sp, #{self.memDescriptor[elem]}]\n'
+
                 #Para operaciones condicionales.
                 if elem in self.cmpOps.keys():
-                    self.flagBranch = self.cmpOps[elem]
+                    if splitted[-1].find('IF_') > -1:
+                        self.flagBranch = self.cmpIfOps[elem]
+                    else:
+                        self.flagBranch = self.cmpOps[elem]
                     reg = self.getReg(splitted[i-1])
                     reg2 = self.getReg(splitted[i+1])
                     
@@ -222,7 +251,7 @@ exit:
                             self.falseStatements.pop()
                             break
 
-
+                
                 #NO DEBERIAN DE EXISTIR TEMPORALES
                 for elem in self.registers_av.keys():
                     val = self.registers_av[elem]
@@ -286,7 +315,7 @@ exit:
                 if register != None:
                     return register
                 else:
-                    return "OUT OF REGISTERS PAPAITO."
+                    return "-1"
         else:
             return "#"+var
 
@@ -299,7 +328,7 @@ exit:
             if self.registers_av[i] == var:
                 register = i
                 break
-        new_reg = f"R{counter}"
+        new_reg = "R" + str(counter)
         content = self.registers_av[new_reg]
         if "PARAM" not in content and content != "" and register != new_reg and register != None:
             regi3 = None
@@ -318,6 +347,7 @@ exit:
             self.registers_av[register] = content
             self.registers_av[new_reg] = self.registers_av[regi3]
             self.registers_av[regi3] = ""
+
             return arm_code
 
         elif register != new_reg and register != None:
@@ -334,7 +364,7 @@ exit:
         else:
             arm_code = "\tMOV " + new_reg + ", #" + var + "\n"
             return arm_code
-        
+            
     def freeReg(self, var):
         for i in self.registers_av.keys():
             if self.registers_av[i] == var:

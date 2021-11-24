@@ -26,7 +26,11 @@ class Program {
 
     void main(void) {
         int n;
-        n = 7;
-        fib(n);
+	n = 5;
+	fib(n);	
     }
 }
+
+
+
+
