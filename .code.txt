@@ -4,32 +4,34 @@ BLOCK
 END OutputInt
 
 
-function fact: 
+function fib: 
 	PARAMETER vArr[4]
-	IFZ_1 vArr[4] <= 1 GOTO IF_TRUE1
-	IF_TRUE1:
-		RETURN 1
+	vArr[8] = 0
+	vArr[12] = 1
+	vArr[16] = 0
+	vArr[20] = 0
+	WHILE_1:
+	t0 = vArr[20] < vArr[4]
+	LOOP_COND vArr[20] < vArr[4] GOTO END_WHILE_1
+		PARAM vArr[8]
+		CALL OutputInt, 1
+vArr[25] = vArr[8] + vArr[12]
+		vArr[16] = vArr[25]
+		vArr[8] = vArr[12]
+		vArr[12] = vArr[16]
+vArr[29] = vArr[20] + 1
+		vArr[20] = vArr[29]
 	BLOCK
-	EXIT IF_1
-vArr[13] = vArr[4] - 1
-	PARAM vArr[13]
-	CALL fact, 1
-	t2 = fact
-	vArr[8] = vArr[17]
-	t3 = vArr[4] * vArr[8]
-	RETURN t3
+	GOTO WHILE_1
+	END_WHILE_1:
 BLOCK
-END fact
+END fib
 
 
 function main: 
-	vArr[25] = 3
-	PARAM vArr[25]
-	CALL fact, 1
-	t4 = fact
-	vArr[29] = vArr[33]
-	PARAM vArr[29]
-	CALL OutputInt, 1
+	vArr[33] = 5
+	PARAM vArr[33]
+	CALL fib, 1
 BLOCK
 END main
 

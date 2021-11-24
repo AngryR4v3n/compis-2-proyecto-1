@@ -467,6 +467,10 @@ class CustomListener(DecafListener):
 
                 #INTERMEDIATE
 
+                #CHECK RECURSIVE
+                if name == self.currentScope and name.find('WHILE') == -1:
+                    self.writer.writeLine(f'RECURSIVE', self.nest)
+
                 #params
                 for elem in ctx.expression():
                     param = elem.getText()
@@ -522,7 +526,12 @@ class CustomListener(DecafListener):
 
         #INTERMEDIATE
         op1, op2 = self.writer.getOperators(self, ctx.getChild(1), None)
-        self.writer.writeLine(f'RETURN {op1}', self.nest)
+        if op1.find('t') > -1:
+            op1, sc = self.findSymbolTableEntry(op1,self.currentScope)
+            op1 = op1.offset
+            self.writer.writeLine(f'RETURN vArr[{op1}]', self.nest)
+        else:
+            self.writer.writeLine(f'RETURN {op1}', self.nest)
     
     
     def exitSumOp(self, ctx: DecafParser.SumOpContext):
@@ -565,7 +574,7 @@ class CustomListener(DecafListener):
 
             #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
             self.nodeTempVars[ctx] = targetTemp.name
-            self.writer.write(f'{targetTemp.name} = ', self.nest)
+            self.writer.write(f'vArr[{targetTemp.offset}] = ', self.nest)
             x1, x2 = self.writer.getOperators(self, op1, op2)
             self.writer.writeLine(f'{x1} {operation} {x2}')
 
@@ -785,7 +794,8 @@ class CustomListener(DecafListener):
         targetTemp, scope = self.findSymbolTableEntry(f't{self.tempCount -1}', self.currentScope)
         self.nodeTempVars[ctx] = targetTemp.name
         call = ctx.getChild(0).getChild(0).getText()
-        self.writer.writeLine(f'{targetTemp.name} = {call}', self.nest)
+        
+        self.writer.writeLine(f'vArr[{targetTemp.offset}] = {call}', self.nest)
         #agregamos a nodeTemp que deberia saber que ctx apunta a que tempVar
         self.nodeTempVars[ctx] = targetTemp.name
 

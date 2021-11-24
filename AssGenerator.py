@@ -11,6 +11,7 @@ class AssGenerator():
         self.f = open('miprog.s', 'w')
         self.registers_av = {"R1": "PARAM","R2": "PARAM", "R3": "PARAM", "R4": "", "R5": "", "R6": "", "R7": "", "R8": "" , "R9": "" , "R10": "", "R11": "", "R12": ""}
         self.asociated_params = {}
+        self.translatedParams = {}
         self.memDescriptor = {}
         self.cmpOps = {"<": 'bgt',  "==": "bne", ">": "blt", '>=': 'bgt', '<=': 'blt', '!=': 'bne'}
         self.cmpIfOps = {"<": 'blt', '==': 'beq', '>': 'bgt', '!=': 'bne', '>=': 'bgt', '<=': 'blt'}
@@ -74,16 +75,25 @@ exit:
             if elem.strip().find('IF_FALSE') > -1:
                 name = elem.strip().replace(':', '')
                 self.falseStatements.append(name)
+
+    def getPriorityReg(self, variable):
+        if variable in self.translatedParams.keys():
+            return self.translatedParams[variable]
+        else:
+            return self.getReg(variable)
                 
     def function_identifier(self, content):
         paramCounter = 1
         paramPush = 0
         global var
+        isRecursive = False
         var = ''
         for number, line in enumerate(content):
             line = line.strip()
             if line.find('function') > -1:
                 name = line.split('function')[1].strip()
+                functionName = name
+                isRecursive = False
                 self.funciones.append(name.replace(':',''))
                 
                 if name.find('OutputInt') <= -1:
@@ -117,7 +127,10 @@ exit:
                         var  += f"\tSUB {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
                         continue
                     elif elem == '*':
-                        var  += f"\tMUL {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        r1 = self.getPriorityReg(splitted[0])
+                        r2 = self.getPriorityReg(splitted[i-1])
+                        r3 = self.getPriorityReg(splitted[i+1].strip())
+                        var  += f"\tMUL {r1},  {r2}, {r3} \n"
                         continue
 
                 elif elem == '=' and not len(splitted) > 3:
@@ -170,6 +183,11 @@ exit:
 
                     else:
                         var  += f'\tBL {functionName}\n'
+                        if isRecursive:
+                            funct = functionName.replace(':','')
+                            arr = self.asociated_params[funct]
+                            for a in arr:
+                                var += '\tPOP {R%s} \n' % a
 
 
 
@@ -180,8 +198,14 @@ exit:
                         self.loops.append(elem)
                         continue
 
-                    
+                if elem.find('RECURSIVE') > -1:
+                    isRecursive = True
+                    funct = functionName.replace(':','')
+                    arr = self.asociated_params[funct]
+                    for a in arr:
+                        var += '\tPUSH {R%s} \n' % a
 
+                    
                 if elem.find("PARAMETER") > -1 and name != 'OutputInt:':
                     register = f'R{paramCounter}'
                     funct = name.replace(':','')
@@ -200,6 +224,8 @@ exit:
                     regi = self.getReg(splitted[i+1].strip())
 
                     var  += f'\tMOV {regi}, {register}\n'
+
+                    self.translatedParams[splitted[i+1]] = register
                     paramCounter += 1
 
                 if elem.find("BLOCK") > -1:
