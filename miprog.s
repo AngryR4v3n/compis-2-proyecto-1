@@ -8,33 +8,52 @@ OutputInt:
     BL printf           @ call printf, where R1 is the print argument 
     POP {PC}
 
-WHILE_1:
-	cmp R8, R4
-	bgt END_WHILE_1
-	MOV R1,R5
-	BL OutputInt
- 	ADD R9, R5, R6 
-	MOV R7, R9
-	MOV R5, R6
-	MOV R6, R7
- 	ADD R10, R8, #1 
-	MOV R8, R10
-	b WHILE_1
-fib:
+IF_TRUE1:
+ 	ADD R6, R2, #1 
+	MOV R0, R6 
+	POP {PC} 
+ 
+ IF_TRUE2:
+	SUB R7, R1, #1 
+	MOV R1,R7
+	MOV R2, #1
+	BL ackerman
+	MOV R8, R0
+	MOV R0, R8 
+	POP {PC} 
+ 
+ IF_FALSE2:
+	SUB R9, R2, #1 
+	MOV R1,R4
+	MOV R2,R9
+	BL ackerman
+	MOV R10, R0
+	MOV R11, R10
+	SUB R12, R1, #1 
+	MOV R1,R12
+	MOV R2,R11
+	BL ackerman
+	MOV R5, R0
+	MOV R0, R5
+	POP {PC} 
+ 
+ ackerman:
 	PUSH {LR}
 	MOV R4, R1
-	MOV R5, #0
-	MOV R6, #1
-	MOV R7, #0
-	MOV R8, #0
-	b WHILE_1
-END_WHILE_1:
-	b exit 
-	b WHILE_1
+	MOV R5, R2
+	MOV R1,R5
+	BL OutputInt
+	cmp R4, #0
+	beq IF_TRUE1
+	cmp R5, #0
+	beq IF_TRUE2
+	B IF_FALSE2
 main:
-	MOV R11, #5
-	MOV R1,R11
-	BL fib
+	MOV R1,#0
+	MOV R2,#1
+	BL ackerman
+	MOV R1, R0
+	bl OutputInt
 
 exit:
 	MOV R7, #4          @ write syscall, 4

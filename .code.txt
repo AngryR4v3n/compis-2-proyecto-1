@@ -4,34 +4,49 @@ BLOCK
 END OutputInt
 
 
-function fib: 
+function ackerman: 
 	PARAMETER vArr[4]
-	vArr[8] = 0
-	vArr[12] = 1
-	vArr[16] = 0
-	vArr[20] = 0
-	WHILE_1:
-	t0 = vArr[20] < vArr[4]
-	LOOP_COND vArr[20] < vArr[4] GOTO END_WHILE_1
-		PARAM vArr[8]
-		CALL OutputInt, 1
-vArr[25] = vArr[8] + vArr[12]
-		vArr[16] = vArr[25]
-		vArr[8] = vArr[12]
-		vArr[12] = vArr[16]
-vArr[29] = vArr[20] + 1
-		vArr[20] = vArr[29]
+	PARAMETER vArr[8]
+	PARAM vArr[8]
+	CALL OutputInt, 1
+	IFZ_1 vArr[4] == 0 GOTO IF_TRUE1
+	IF_TRUE1:
+vArr[13] = vArr[8] + 1
+		RETURN vArr[13]
 	BLOCK
-	GOTO WHILE_1
-	END_WHILE_1:
+	EXIT IF_1
+	IFZ_2 vArr[8] == 0 GOTO IF_TRUE2
+	IF_TRUE2:
+vArr[18] = vArr[4] - 1
+		PARAM vArr[18]
+		PARAM 1
+		CALL ackerman, 2
+		vArr[22] = ackerman
+		RETURN vArr[22]
+	BLOCK
+	IF_FALSE2:
+vArr[30] = vArr[8] - 1
+		PARAM vArr[4]
+		PARAM vArr[30]
+		CALL ackerman, 2
+		vArr[34] = ackerman
+		vArr[26] = vArr[34]
+vArr[38] = vArr[4] - 1
+		PARAM vArr[38]
+		PARAM vArr[26]
+		CALL ackerman, 2
+		vArr[42] = ackerman
+		RETURN vArr[42]
+	BLOCK
+	EXIT IF_2
 BLOCK
-END fib
+END ackerman
 
 
 function main: 
-	vArr[33] = 5
-	PARAM vArr[33]
-	CALL fib, 1
+	PARAM 1
+	PARAM 1
+	CALL ackerman, 2
 BLOCK
 END main
 

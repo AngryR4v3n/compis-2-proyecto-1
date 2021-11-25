@@ -25,7 +25,7 @@ class GUI:
         
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
         self.separator = tk.Frame(self.window, relief=tk.RAISED, bd=2)
-        self.terminalSc = tk.Text(self.window, background="black")
+        self.terminalSc = tk.Text(self.window)
         self.btn_open = tk.Button(self.fr_buttons, text="Open", command=self.open_file)
         self.btn_save = tk.Button(self.fr_buttons, text="Save As...", command=self.save_file)
         self.btn_saveNotAs = tk.Button(self.fr_buttons, text="Save", command=self.save)
@@ -128,15 +128,15 @@ class GUI:
             tk.messagebox.showinfo(title="Successfully compiled!", message="No syntax errors found.")
 
             writer = AssGenerator()
-            '''
+            
             try:
                 tk.messagebox.showinfo(title="CSV viewer", message="Using Libreoffice calc.")
-                self.subprocess_cmd(f'{os.getcwd()}','kate .code.txt','libreoffice --calc symbols.csv')
+                self.subprocess_cmd(f'{os.getcwd()}','kate miprog.s','libreoffice --calc symbols.csv')
                 #self.child = subprocess.Popen([sys.executable, 'libreoffice --calc symbols.csv'])
                 #os.system('libreoffice --calc symbols.csv')
             except:
                 tk.messagebox.showerror(title="Couldn't launch csv viewer!", message="You can still check the file at ./symbols.csv")
-            '''
+            
 
 
         else:

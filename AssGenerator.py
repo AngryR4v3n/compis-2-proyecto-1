@@ -121,10 +121,16 @@ exit:
                 
                 if '=' in splitted and len(splitted) > 3:
                     if elem == '+':
-                        var  += f" \tADD {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        r1 = self.getPriorityReg(splitted[0])
+                        r2 = self.getPriorityReg(splitted[i-1])
+                        r3 = self.getPriorityReg(splitted[i+1].strip())
+                        var  += f" \tADD {r1}, {r2}, {r3} \n"
                         continue
                     elif elem == '-':
-                        var  += f"\tSUB {self.getReg(splitted[0])}, {self.getReg(splitted[i-1])}, {self.getReg(splitted[i+1].strip())} \n"
+                        r1 = self.getPriorityReg(splitted[0])
+                        r2 = self.getPriorityReg(splitted[i-1])
+                        r3 = self.getPriorityReg(splitted[i+1].strip())
+                        var  += f"\tSUB {r1}, {r2}, {r3} \n"
                         continue
                     elif elem == '*':
                         r1 = self.getPriorityReg(splitted[0])
@@ -319,9 +325,10 @@ exit:
 
     def getReg(self, var):
         register = None
-        #en el caso que ya este guardado antes return el registro en donde esta
+        
+        
         var = var.strip()
-
+        #Caso: Que ya exista en otro registro la variable buscada, solo llamamos el registro.
         if var.find("[") > -1 or var.find("t") > -1 or var.find('vArr') > -1:
             for i in self.registers_av.keys():
                 if self.registers_av[i] == var:
@@ -331,7 +338,7 @@ exit:
             if register != None:
                 return register
             else:
-                #en el caso que no este guardado busco uno vacio y le asigno a ese registro vacio el valor de var
+                #Caso: Si no esta guardado, buscar uno vacio y asignar ese registro
                 for i in self.registers_av.keys():
                     if self.registers_av[i] == "" or self.registers_av[i] == '':
                         self.registers_av[i] = var
@@ -341,56 +348,64 @@ exit:
                 if register != None:
                     return register
                 else:
+                    #Si no, out of registers...
                     return "-1"
         else:
+            #si entra un numero, convertirlo a una etiqueta en assembly
             return "#"+var
 
 
 
     def getRegParam(self, var, counter):
         register = None
-        global flag_main
+        #nuevamente, si es caso que ya existe, ingresar.
         for i in self.registers_av.keys():
             if self.registers_av[i] == var:
                 register = i
                 break
+
+        #Indicar a que registro
         new_reg = "R" + str(counter)
         content = self.registers_av[new_reg]
+        #si encontramos un registro que no sea otro parametro, buscamos
         if "PARAM" not in content and content != "" and register != new_reg and register != None:
             regi3 = None
             for i in self.registers_av.keys():
+                #busqueda de uno vacio
                 if self.registers_av[i] == "":
                     self.registers_av[i] = var
                     regi3 = i
                     break
             
-            #muevo el valor del parametro a un registro cualquiera
+            #Si encontramos en uno que tenia algo, buscamos sustituir valores, puesto que necesitamos al parametro AHI
             arm_code = "\tMOV " + regi3 + "," + register + "\n"
             arm_code  += "\tMOV " + register + "," + new_reg + "\n"
             arm_code  += "\tMOV " + new_reg + "," + regi3 + "\n"
             
-            #cambiamos los valores en nuestra tabla de registros disponibles
+            #Actualizamos tabla de registros
             self.registers_av[register] = content
             self.registers_av[new_reg] = self.registers_av[regi3]
             self.registers_av[regi3] = ""
 
             return arm_code
-
+        # Si el registro es distinto del nuevo, y no es nulo
         elif register != new_reg and register != None:
             content = content.split(" ")
-            
+            #Movemos lo que tenemos a este nuevo registro.
             arm_code = "\tMOV " + new_reg + "," + register + "\n"
-            #if not flag_main:
-            #   arm_code += "PUSH {" + content[1] + "} \n" 
             
             return arm_code
+        
         elif var == "R0":
+            #Si es R0, lo metemos a un registro nuevo
             arm_code = "\tMOV " + new_reg + ", " + var + "\n"
             return arm_code
         else:
+            #Guardado de valor.
             arm_code = "\tMOV " + new_reg + ", #" + var + "\n"
             return arm_code
-            
+    
+    #limpiamos una variable que ya no sirve, esto la habilita segun tabla de registros.
     def freeReg(self, var):
         for i in self.registers_av.keys():
             if self.registers_av[i] == var:
